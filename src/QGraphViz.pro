@@ -6,7 +6,7 @@
 
 QT       += core gui
 
-TARGET = DirectedGraphView
+TARGET = QGraphViz
 TEMPLATE = app
 
 
