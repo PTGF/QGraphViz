@@ -34,6 +34,11 @@
 #include <QtDebug>
 #endif
 
+static const double Pi = 3.14159265358979323846264338327950288419717;
+static double TwoPi = 2.0 * Pi;
+static double ThirdPi = Pi / 3;
+static const qreal ArrowSize = 10;
+
 QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphVizScene *scene, QGraphicsItem * parent) :
     QGraphicsItemGroup(parent),
     m_PathItem(NULL),
@@ -48,51 +53,42 @@ QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphVizScene *scene, QGraphicsItem 
     QPainterPath path;
     for(int i=0; i < edgeInfo.spl->size; ++i) {
         bezier bez = edgeInfo.spl->list[i];
-        if(bez.size == 4) {
-            QPointF startPoint = scene->transformPoint(bez.list[0].x, bez.list[0].y);
-            QPointF point1 = scene->transformPoint(bez.list[1].x, bez.list[1].y) - startPoint;
-            QPointF point2 = scene->transformPoint(bez.list[2].x, bez.list[2].y) - startPoint;
-            QPointF point3 = scene->transformPoint(bez.list[3].x, bez.list[3].y) - startPoint;
-            QPointF endPoint = scene->transformPoint(bez.ep.x, bez.ep.y) - startPoint;
 
-            //TEST: This needs to be tested with a larger dot file with bigger beziers; I'm not certain this is what they are intending with five points
-            //path.moveTo(0.0,0.0);
-            path.lineTo(point1);            // Line between start and point 1
-            path.quadTo(point2, point3);    // Bezier between points 1, 2, and 3
-            path.lineTo(endPoint);          // Line between point 3 and end
-            path.closeSubpath();
+        /*! \note Hell if I know why they don't use 'sp' as the start point, and instead stick the damn thing in the
+                  first point of the bezier array (each bezier is 3 points) */
 
-            // Add an arrowhead
-            QLineF line(endPoint, point3);
-            if(!qFuzzyCompare(line.length(), qreal(0.0))) {  // Taken from Qt4 edge example
-                static const double Pi = 3.14159265358979323846264338327950288419717;
-                static double TwoPi = 2.0 * Pi;
-                static double ThirdPi = Pi / 3;
-                static const qreal arrowSize = 10;
+        QPointF startPoint = scene->transformPoint(bez.list[0].x, bez.list[0].y);
+        QPointF endPoint = scene->transformPoint(bez.ep.x, bez.ep.y) - startPoint;
 
-                qreal angle = acos(line.dx() / line.length());
-                if(line.dy() >= 0) {
-                    angle = TwoPi - angle;
-                }
+        QPointF point1, point2, point3;
+        for(int j=1; j < bez.size; ++j) {
+            point1 = scene->transformPoint(bez.list[j].x, bez.list[j].y) - startPoint; ++j;
+            point2 = scene->transformPoint(bez.list[j].x, bez.list[j].y) - startPoint; ++j;
+            point3 = scene->transformPoint(bez.list[j].x, bez.list[j].y) - startPoint;
+            path.cubicTo(point1, point2, point3);
+        }
 
-                QPointF arrowP1 = QPointF(sin(angle + ThirdPi) * arrowSize, cos(angle + ThirdPi) * arrowSize);
-                path.moveTo(endPoint);
-                path.lineTo(arrowP1 + endPoint);
-                path.closeSubpath();
+        path.lineTo(endPoint);
+//        path.closeSubpath();
 
-                QPointF arrowP2 = QPointF(sin(angle + Pi - ThirdPi) * arrowSize, cos(angle + Pi - ThirdPi) * arrowSize);
-                path.moveTo(endPoint);
-                path.lineTo(arrowP2 + endPoint);
-                path.closeSubpath();
+        // Add an arrowhead
+        QLineF line(endPoint, point3);
+        if(!qFuzzyCompare(line.length(), qreal(0.0))) {  // Taken from Qt4 edge example
+            qreal angle = acos(line.dx() / line.length());
+            if(line.dy() >= 0) {
+                angle = TwoPi - angle;
             }
 
-            m_PathItem->setPos(startPoint);
+            QPointF arrowP1 = QPointF(sin(angle + ThirdPi) * ArrowSize, cos(angle + ThirdPi) * ArrowSize);
+            path.moveTo(endPoint);
+            path.lineTo(arrowP1 + endPoint);
 
-#ifdef QT_DEBUG
-        } else {
-            qDebug() << "Unknown bezier size! Contains " << bez.size << " points";
-#endif
+            QPointF arrowP2 = QPointF(sin(angle + Pi - ThirdPi) * ArrowSize, cos(angle + Pi - ThirdPi) * ArrowSize);
+            path.moveTo(endPoint);
+            path.lineTo(arrowP2 + endPoint);
         }
+
+        m_PathItem->setPos(startPoint);
     }
     QPen pen(Qt::black);
     pen.setWidthF(edgeInfo.weight * 1.5);

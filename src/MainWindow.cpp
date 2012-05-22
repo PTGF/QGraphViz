@@ -39,6 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     QFile file("../mpi_ringtopo.0001.3D.dot");
+//    QFile file("../crazy.gv");
     if(file.exists()) {
         file.open(QIODevice::ReadOnly);
         QByteArray data = file.readAll();
