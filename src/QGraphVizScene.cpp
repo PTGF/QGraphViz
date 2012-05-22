@@ -25,22 +25,21 @@
 
  */
 
-#ifndef GRAPHSCENE_H
-#define GRAPHSCENE_H
+#include "QGraphVizScene.h"
 
-#include <QtCore>
-#include <QtGui>
-
-class GraphScene : public QGraphicsScene
+QGraphVizScene::QGraphVizScene(QPointF translate, QPointF scale, QWidget *parent) :
+    QGraphicsScene(parent),
+    m_Translate(translate),
+    m_Scale(scale)
 {
-    Q_OBJECT
-public:
-    explicit GraphScene(QWidget *parent = 0);
+}
 
-signals:
+QPointF QGraphVizScene::transformPoint(const QPointF &point)
+{
+    return transformPoint(point.x(), point.y());
+}
 
-public slots:
-
-};
-
-#endif // GRAPHSCENE_H
+QPointF QGraphVizScene::transformPoint(qreal x, qreal y)
+{
+    return QPointF((x + m_Translate.x()) * m_Scale.x(), (y + m_Translate.y()) * m_Scale.y());
+}

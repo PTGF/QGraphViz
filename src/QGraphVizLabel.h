@@ -34,11 +34,12 @@
 #include <graphviz/types.h>
 
 class QGraphVizNode;
+class QGraphVizScene;
 
 class QGraphVizLabel : public QGraphicsSimpleTextItem
 {
 public:
-    explicit QGraphVizLabel(textlabel_t *label, QGraphicsItem * parent = NULL);
+    explicit QGraphVizLabel(textlabel_t *label, QGraphVizScene *scene, QGraphicsItem * parent = NULL);
 
     // Label properties
     void setText(const QString &text);

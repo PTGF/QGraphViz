@@ -26,9 +26,9 @@
  */
 
 #include "QGraphVizLabel.h"
+#include "QGraphVizScene.h"
 
-
-QGraphVizLabel::QGraphVizLabel(textlabel_t *label, QGraphicsItem * parent) :
+QGraphVizLabel::QGraphVizLabel(textlabel_t *label, QGraphVizScene *scene, QGraphicsItem * parent) :
     QGraphicsSimpleTextItem(parent),
     m_Alignment(Qt::AlignCenter),
     m_UpdateDimensions(false)
@@ -44,12 +44,17 @@ QGraphVizLabel::QGraphVizLabel(textlabel_t *label, QGraphicsItem * parent) :
 
     // Set the font parameters
     QFont font;
+    font.setStyleHint(QFont::Serif);
+    font.setStyleStrategy((QFont::StyleStrategy)(QFont::PreferAntialias | QFont::PreferQuality));
     font.setFamily(label->fontname);
     font.setPointSizeF(label->fontsize * .75);
     setFont(font);
 
     // Set the font color
-    setPen(QColor(label->fontcolor));  // HEX 'name' (i.e. "#FFFFFF\0"), but works with QColor just fine
+    QPen pen = this->pen();
+    pen.setWidthF(1.0);
+    pen.setColor(label->fontcolor);
+    setPen(pen);                       // HEX 'name' (i.e. "#FFFFFF\0"), but works with QColor just fine
 
 //    const QGraphVizNodeAttributes &nodeAttr = QGraphVizNodeAttributes(node);  //TODO: Make copy constructor
 //    if(nodeAttr.contains("labeljust")) {
@@ -60,7 +65,7 @@ QGraphVizLabel::QGraphVizLabel(textlabel_t *label, QGraphicsItem * parent) :
 //    }
 
     if(!m_UpdateDimensions) {
-        QPointF position = QPointF(label->pos.x, -label->pos.y);
+        QPointF position = scene->transformPoint(label->pos.x, label->pos.y);
         if(parent) {
             position -= parent->pos();                       // Transform to parent object coordinates
         }

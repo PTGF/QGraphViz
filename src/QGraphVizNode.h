@@ -25,20 +25,21 @@
 
  */
 
-#ifndef GRAPHNODE_H
-#define GRAPHNODE_H
+#ifndef QGRAPHVIZNODE_H
+#define QGRAPHVIZNODE_H
 
 #include <QtCore>
 #include <QtGui>
 
 #include <graphviz/types.h>
 
-#include "QGraphVizLabel.h"
+class QGraphVizLabel;
+class QGraphVizScene;
 
 class QGraphVizNode : public QGraphicsItemGroup
 {
 public:
-    explicit QGraphVizNode(node_t *node, QGraphicsItem * parent = 0);
+    explicit QGraphVizNode(node_t *node, QGraphVizScene *scene, QGraphicsItem * parent = 0);
 
     // Node properties
     qreal width() const;
@@ -56,4 +57,4 @@ private:
     QGraphVizLabel *m_LabelItem;
 };
 
-#endif // GRAPHNODE_H
+#endif // QGRAPHVIZNODE_H

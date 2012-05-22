@@ -35,6 +35,7 @@
   #include <QtDebug>
 #endif
 
+#include "QGraphVizScene.h"
 #include "QGraphVizNode.h"
 #include "QGraphVizEdge.h"
 
@@ -206,21 +207,22 @@ QGraphicsScene *QGraphViz::renderScene(QWidget *parent)
         doLayout();
     }
 
-    QGraphicsScene *scene = new QGraphicsScene(parent);
-    //TODO: Resize scene to graph_t properties
-//    scene->setSceneRect(-m_Graph->u.bb.LL.x, -m_Graph->u.bb.LL.y, -m_Graph->u.bb.UR.x, -m_Graph->u.bb.UR.y);
+    QPointF translate(-m_Graph->u.bb.LL.x, -m_Graph->u.bb.UR.y);
+    QPointF scale(1.0, -1.0);
+    QGraphVizScene *scene = new QGraphVizScene(translate, scale, parent);
 
     node_t *node = agfstnode(m_Graph);
     while(node) {
+        scene->addItem(new QGraphVizNode(node, scene));
+
         Agedge_t *edge = agfstedge(m_Graph, node);
         while(edge) {
-            scene->addItem(new QGraphVizEdge(edge));
+            scene->addItem(new QGraphVizEdge(edge, scene));
             edge = agnxtedge(m_Graph, edge, node);
         }
 
-        scene->addItem(new QGraphVizNode(node));
         node = agnxtnode(m_Graph, node);
     }
 
-    return scene;
+    return (QGraphicsScene *)scene;
 }

@@ -27,11 +27,11 @@
 
 #include "QGraphVizNode.h"
 #include "QGraphVizLabel.h"
-#include "QGraphVizAttributes.h"
+#include "QGraphVizScene.h"
 
 #include <QtDebug>
 
-QGraphVizNode::QGraphVizNode(node_t *node, QGraphicsItem * parent) :
+QGraphVizNode::QGraphVizNode(node_t *node, QGraphVizScene *scene, QGraphicsItem * parent) :
     QGraphicsItemGroup(parent),
     m_RectItem(NULL),
     m_LabelItem(NULL)
@@ -43,13 +43,16 @@ QGraphVizNode::QGraphVizNode(node_t *node, QGraphicsItem * parent) :
     // Size and location
     setWidth(nodeInfo.width * 72);             // 72 pixels per inch
     setHeight(nodeInfo.height * 72);
-    setPos(nodeInfo.coord.x - width()/2, -(nodeInfo.coord.y - height()/2));
+
+    QPointF position = scene->transformPoint(nodeInfo.coord.x, nodeInfo.coord.y);
+    position -= QPointF(width()/2, height()/2);
+    setPos(position);
 
     //TODO: Node color
     m_RectItem->setBrush((Qt::GlobalColor)(node->id % 16 + 2));
 
     if(node->u.label) {
-        m_LabelItem = new QGraphVizLabel(node->u.label, this);
+        m_LabelItem = new QGraphVizLabel(node->u.label, scene, this);
     }
 
     if(nodeInfo.xlabel) {

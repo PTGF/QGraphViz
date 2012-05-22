@@ -28,12 +28,13 @@
 #include "QGraphVizEdge.h"
 
 #include "QGraphVizLabel.h"
+#include "QGraphVizScene.h"
 
 #ifdef QT_DEBUG
 #include <QtDebug>
 #endif
 
-QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphicsItem * parent) :
+QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphVizScene *scene, QGraphicsItem * parent) :
     QGraphicsItemGroup(parent),
     m_PathItem(NULL),
     m_Label(NULL),
@@ -48,20 +49,44 @@ QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphicsItem * parent) :
     for(int i=0; i < edgeInfo.spl->size; ++i) {
         bezier bez = edgeInfo.spl->list[i];
         if(bez.size == 4) {
-            // The group will be placed at the starting point (point0)
-            QPointF point0 = QPoint(bez.list[0].x, -bez.list[0].y);
+            QPointF startPoint = scene->transformPoint(bez.list[0].x, bez.list[0].y);
+            QPointF point1 = scene->transformPoint(bez.list[1].x, bez.list[1].y) - startPoint;
+            QPointF point2 = scene->transformPoint(bez.list[2].x, bez.list[2].y) - startPoint;
+            QPointF point3 = scene->transformPoint(bez.list[3].x, bez.list[3].y) - startPoint;
+            QPointF endPoint = scene->transformPoint(bez.ep.x, bez.ep.y) - startPoint;
 
-            // Everything has to be translated from within the group
-            QPointF point1 = QPoint(bez.list[1].x, -bez.list[1].y) - point0;
-            QPointF point2 = QPoint(bez.list[2].x, -bez.list[2].y) - point0;
-            QPointF point3 = QPoint(bez.list[3].x, -bez.list[3].y) - point0;
-            path.cubicTo(point1, point2, point3);
+            //TEST: This needs to be tested with a larger dot file with bigger beziers; I'm not certain this is what they are intending with five points
+            //path.moveTo(0.0,0.0);
+            path.lineTo(point1);            // Line between start and point 1
+            path.quadTo(point2, point3);    // Bezier between points 1, 2, and 3
+            path.lineTo(endPoint);          // Line between point 3 and end
+            path.closeSubpath();
 
-            //TODO: Add an arrowhead
-            path.addEllipse(point3, 5, 5);
+            // Add an arrowhead
+            QLineF line(endPoint, point3);
+            if(!qFuzzyCompare(line.length(), qreal(0.0))) {  // Taken from Qt4 edge example
+                static const double Pi = 3.14159265358979323846264338327950288419717;
+                static double TwoPi = 2.0 * Pi;
+                static double ThirdPi = Pi / 3;
+                static const qreal arrowSize = 10;
 
-            point0.setY(point0.y() + path.boundingRect().height()/2);  //TODO: Figure out the proper shift
-            m_PathItem->setPos(point0);
+                qreal angle = acos(line.dx() / line.length());
+                if(line.dy() >= 0) {
+                    angle = TwoPi - angle;
+                }
+
+                QPointF arrowP1 = QPointF(sin(angle + ThirdPi) * arrowSize, cos(angle + ThirdPi) * arrowSize);
+                path.moveTo(endPoint);
+                path.lineTo(arrowP1 + endPoint);
+                path.closeSubpath();
+
+                QPointF arrowP2 = QPointF(sin(angle + Pi - ThirdPi) * arrowSize, cos(angle + Pi - ThirdPi) * arrowSize);
+                path.moveTo(endPoint);
+                path.lineTo(arrowP2 + endPoint);
+                path.closeSubpath();
+            }
+
+            m_PathItem->setPos(startPoint);
 
 #ifdef QT_DEBUG
         } else {
@@ -69,16 +94,19 @@ QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphicsItem * parent) :
 #endif
         }
     }
+    QPen pen(Qt::black);
+    pen.setWidthF(edgeInfo.weight * 1.5);
+    m_PathItem->setPen(pen);
     m_PathItem->setPath(path);
 
     if(edgeInfo.label) {
-        m_Label = new QGraphVizLabel(edgeInfo.label, this);
+        m_Label = new QGraphVizLabel(edgeInfo.label, scene, this);
     }
     if(edgeInfo.head_label) {
-        m_LabelHead = new QGraphVizLabel(edgeInfo.head_label, this);
+        m_LabelHead = new QGraphVizLabel(edgeInfo.head_label, scene, this);
     }
     if(edgeInfo.tail_label) {
-        m_LabelTail = new QGraphVizLabel(edgeInfo.tail_label, this);
+        m_LabelTail = new QGraphVizLabel(edgeInfo.tail_label, scene, this);
     }
     if(edgeInfo.xlabel) {
         setToolTip(edgeInfo.xlabel->text);

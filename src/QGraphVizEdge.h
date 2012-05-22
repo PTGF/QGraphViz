@@ -25,8 +25,8 @@
 
  */
 
-#ifndef GRAPHEDGE_H
-#define GRAPHEDGE_H
+#ifndef QGRAPHVIZEDGE_H
+#define QGRAPHVIZEDGE_H
 
 #include <QtCore>
 #include <QtGui>
@@ -34,11 +34,12 @@
 #include <graphviz/types.h>
 
 class QGraphVizLabel;
+class QGraphVizScene;
 
 class QGraphVizEdge : public QGraphicsItemGroup
 {
 public:
-    explicit QGraphVizEdge(edge_t *edge, QGraphicsItem * parent = 0);
+    explicit QGraphVizEdge(edge_t *edge, QGraphVizScene *scene, QGraphicsItem * parent = 0);
 
 protected:
     void updateDimensions();
@@ -52,4 +53,4 @@ private:
 
 };
 
-#endif // GRAPHEDGE_H
+#endif // QGRAPHVIZEDGE_H

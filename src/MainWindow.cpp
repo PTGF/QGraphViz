@@ -48,34 +48,18 @@ MainWindow::MainWindow(QWidget *parent) :
 
         QGraphicsScene *scene = gv.renderScene(this);
         QGraphicsView *view = new QGraphicsView(scene);
+        view->setRenderHint(QPainter::Antialiasing);       // Looks like crap without antialiasing
         ui->tabWidget->setCurrentIndex(ui->tabWidget->addTab(view, "View"));
 
         QByteArray content = gv.renderedContent();
         ui->textEdit->setText(QString(content));
 
-//        gv.setRenderEngine("png");
-//        content = gv.renderedContent();
-//        QPixmap pixmap;
-//        pixmap.loadFromData(content);
-//        ui->label->setPixmap(pixmap);
+        gv.setRenderEngine("png");
+        content = gv.renderedContent();
+        QPixmap pixmap;
+        pixmap.loadFromData(content);
+        ui->label->setPixmap(pixmap.scaled(QSize(512,768), Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
-
-
-//    // Initialize GraphViz engine
-//    aginit();
-
-//    // Create GraphViz Context object
-//    GVC_t *context = gvContext();
-
-//    // Load graph from string
-//    Agraph_t *graph = agmemread(data.data());
-
-//    char *result;
-//    unsigned int length;
-//    gvRenderData(context, graph, "dot", &result, &length);
-
-//    gvFreeLayout(context, graph);
-//    agclose(graph);
 }
 
 MainWindow::~MainWindow()
