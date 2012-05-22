@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QFile file("/home/dane/STAT_results/mpi_ringtopo.0001/mpi_ringtopo.0001.3D.dot");
+    QFile file("../mpi_ringtopo.0001.3D.dot");
     if(file.exists()) {
         file.open(QIODevice::ReadOnly);
         QByteArray data = file.readAll();

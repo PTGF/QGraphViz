@@ -1,0 +1,38 @@
+digraph G {
+	node [shape=record,style=filled,labeljust=c,height=0.2];
+	0 [pos="0,0", label="/", fillcolor="#AAAAAA",fontcolor="#FFFFFF"];
+	49501891 [pos="0,0", label="_start", fillcolor="#f1c71c",fontcolor="#000000"];
+	-1135194732 [pos="0,0", label="__libc_start_main", fillcolor="#f1c71c",fontcolor="#000000"];
+	52696333 [pos="0,0", label="main", fillcolor="#f1c71c",fontcolor="#000000"];
+	-2092031941 [pos="0,0", label="PMPI_Barrier", fillcolor="#e38e38",fontcolor="#000000"];
+	25920501 [pos="0,0", label="ompi_coll_tuned_barrier_intra_dec_fixed", fillcolor="#e38e38",fontcolor="#000000"];
+	91083012 [pos="0,0", label="ompi_coll_tuned_barrier_intra_recursivedoubling", fillcolor="#e38e38",fontcolor="#000000"];
+	574829149 [pos="0,0", label="ompi_coll_tuned_sendrecv_actual", fillcolor="#e38e38",fontcolor="#000000"];
+	2136986896 [pos="0,0", label="ompi_request_default_wait_all", fillcolor="#e38e38",fontcolor="#000000"];
+	584323196 [pos="0,0", label="opal_condition_wait", fillcolor="#e38e38",fontcolor="#000000"];
+	184527044 [pos="0,0", label="opal_progress", fillcolor="#e38e38",fontcolor="#000000"];
+	533154817 [pos="0,0", label="__sched_yield", fillcolor="#e38e38",fontcolor="#000000"];
+	1801896398 [pos="0,0", label="do_SendOrStall", fillcolor="#d55555",fontcolor="#000000"];
+	178815216 [pos="0,0", label="PMPI_Waitall", fillcolor="#c71c71",fontcolor="#FFFFFF"];
+	-1794043843 [pos="0,0", label="ompi_request_default_wait_all", fillcolor="#c71c71",fontcolor="#FFFFFF"];
+	1555430159 [pos="0,0", label="opal_condition_wait", fillcolor="#c71c71",fontcolor="#FFFFFF"];
+	-332760079 [pos="0,0", label="opal_progress", fillcolor="#c71c71",fontcolor="#FFFFFF"];
+	78670612 [pos="0,0", label="__sched_yield", fillcolor="#c71c71",fontcolor="#FFFFFF"];
+	0 -> 49501891 [label="[0-3]"]
+	49501891 -> -1135194732 [label="[0-3]"]
+	-1135194732 -> 52696333 [label="[0-3]"]
+	52696333 -> -2092031941 [label="[0,3]"]
+	-2092031941 -> 25920501 [label="[0,3]"]
+	25920501 -> 91083012 [label="[0,3]"]
+	91083012 -> 574829149 [label="[0,3]"]
+	574829149 -> 2136986896 [label="[0,3]"]
+	2136986896 -> 584323196 [label="[0,3]"]
+	584323196 -> 184527044 [label="[0,3]"]
+	184527044 -> 533154817 [label="[0,3]"]
+	52696333 -> 1801896398 [label="[1]"]
+	52696333 -> 178815216 [label="[2]"]
+	178815216 -> -1794043843 [label="[2]"]
+	-1794043843 -> 1555430159 [label="[2]"]
+	1555430159 -> -332760079 [label="[2]"]
+	-332760079 -> 78670612 [label="[2]"]
+}
