@@ -53,11 +53,11 @@ MainWindow::MainWindow(QWidget *parent) :
         QByteArray content = gv.renderedContent();
         ui->textEdit->setText(QString(content));
 
-        gv.setRenderEngine("png");
-        content = gv.renderedContent();
-        QPixmap pixmap;
-        pixmap.loadFromData(content);
-        ui->label->setPixmap(pixmap);
+//        gv.setRenderEngine("png");
+//        content = gv.renderedContent();
+//        QPixmap pixmap;
+//        pixmap.loadFromData(content);
+//        ui->label->setPixmap(pixmap);
     }
 
 

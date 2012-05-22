@@ -40,48 +40,48 @@ QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphicsItem * parent) :
     m_LabelHead(NULL),
     m_LabelTail(NULL)
 {
+    Agedgeinfo_t &edgeInfo = edge->u;
+
     m_PathItem = new QGraphicsPathItem(this);
 
     QPainterPath path;
-    for(int i=0; i < edge->u.spl->size; ++i) {
-        bezier bez = edge->u.spl->list[i];
-
-        if(bez.size == 2) {                                            // Draw a line
+    for(int i=0; i < edgeInfo.spl->size; ++i) {
+        bezier bez = edgeInfo.spl->list[i];
+        if(bez.size == 4) {
+            // The group will be placed at the starting point (point0)
             QPointF point0 = QPoint(bez.list[0].x, -bez.list[0].y);
-            QPointF point1 = QPoint(bez.list[1].x, -bez.list[1].y) - point0;
 
-            path.lineTo(point1);
-
-            point0.setY(point0.y() + path.boundingRect().height()/2);  //TODO: Figure out the proper shift
-            m_PathItem->setPos(point0);
-
-        } else if(bez.size == 4) {                                     // Draw a bezier curve
-            QPointF point0 = QPoint(bez.list[0].x, -bez.list[0].y);
+            // Everything has to be translated from within the group
             QPointF point1 = QPoint(bez.list[1].x, -bez.list[1].y) - point0;
             QPointF point2 = QPoint(bez.list[2].x, -bez.list[2].y) - point0;
             QPointF point3 = QPoint(bez.list[3].x, -bez.list[3].y) - point0;
-
             path.cubicTo(point1, point2, point3);
+
+            //TODO: Add an arrowhead
+            path.addEllipse(point3, 5, 5);
 
             point0.setY(point0.y() + path.boundingRect().height()/2);  //TODO: Figure out the proper shift
             m_PathItem->setPos(point0);
 
 #ifdef QT_DEBUG
         } else {
-            qDebug() << "Unknown line type! Contains " << bez.size << " points";
+            qDebug() << "Unknown bezier size! Contains " << bez.size << " points";
 #endif
         }
     }
     m_PathItem->setPath(path);
 
-    if(edge->u.label) {
-        m_Label = new QGraphVizLabel(edge->u.label, this);
+    if(edgeInfo.label) {
+        m_Label = new QGraphVizLabel(edgeInfo.label, this);
     }
-    if(edge->u.head_label) {
-        m_LabelHead = new QGraphVizLabel(edge->u.head_label, this);
+    if(edgeInfo.head_label) {
+        m_LabelHead = new QGraphVizLabel(edgeInfo.head_label, this);
     }
-    if(edge->u.tail_label) {
-        m_LabelTail = new QGraphVizLabel(edge->u.tail_label, this);
+    if(edgeInfo.tail_label) {
+        m_LabelTail = new QGraphVizLabel(edgeInfo.tail_label, this);
+    }
+    if(edgeInfo.xlabel) {
+        setToolTip(edgeInfo.xlabel->text);
     }
 }
 

@@ -54,9 +54,6 @@ protected:
 private:
     QGraphicsRectItem *m_RectItem;
     QGraphVizLabel *m_LabelItem;
-    qreal m_Width;
-    qreal m_Height;
-    Qt::AlignmentFlag m_Alignment;
 };
 
 #endif // GRAPHNODE_H

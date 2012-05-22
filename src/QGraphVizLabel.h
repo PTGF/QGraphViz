@@ -52,6 +52,8 @@ protected:
 private:
     Qt::AlignmentFlag m_Alignment;
 
+    bool m_UpdateDimensions;
+
     friend class QGraphVizNode;
     friend class QGraphVizEdge;
 };

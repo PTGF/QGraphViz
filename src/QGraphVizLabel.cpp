@@ -30,18 +30,22 @@
 
 QGraphVizLabel::QGraphVizLabel(textlabel_t *label, QGraphicsItem * parent) :
     QGraphicsSimpleTextItem(parent),
-    m_Alignment(Qt::AlignCenter)
+    m_Alignment(Qt::AlignCenter),
+    m_UpdateDimensions(false)
 {
     if(!label) {
         return;
     }
+
+    // Don't calculate new dimensions based on our parent if we're given the information we need
+    m_UpdateDimensions = (label->pos.x == 0.0 && label->pos.y == 0.0 && label->dimen.x == 0.0 && label->dimen.y == 0.0);
 
     setText(label->text);
 
     // Set the font parameters
     QFont font;
     font.setFamily(label->fontname);
-    font.setPointSizeF(label->fontsize);
+    font.setPointSizeF(label->fontsize * .75);
     setFont(font);
 
     // Set the font color
@@ -54,6 +58,16 @@ QGraphVizLabel::QGraphVizLabel(textlabel_t *label, QGraphicsItem * parent) :
 //        }
 //        //TODO: Other alignments
 //    }
+
+    if(!m_UpdateDimensions) {
+        QPointF position = QPointF(label->pos.x, -label->pos.y);
+        if(parent) {
+            position -= parent->pos();                       // Transform to parent object coordinates
+        }
+        setPos(position);
+    } else {
+        updateDimensions();
+    }
 }
 
 void QGraphVizLabel::setText(const QString &text)
@@ -96,6 +110,10 @@ void QGraphVizLabel::setAlignment(const Qt::AlignmentFlag &alignment)
 
 void QGraphVizLabel::updateDimensions()
 {
+    if(!m_UpdateDimensions && text().isEmpty()) {
+        return;
+    }
+
     const QRectF &parentRect = parentItem()->boundingRect();
 
     if(parentRect.width() <= 0 || parentRect.height() <= 0) {
@@ -118,21 +136,21 @@ void QGraphVizLabel::updateDimensions()
     }
 
     // Text alignment
-    if(!text().isEmpty()) {
-        if(alignment() & Qt::AlignLeft) {
-            setX(0);
-        } else if(alignment() & Qt::AlignRight) {
-            setX(parentRect.width() - boundingRect().width());
-        } else {
-            setX((parentRect.width() - boundingRect().width()) / 2);
-        }
-
-        if(alignment() & Qt::AlignTop) {
-            setY(0);
-        } else if(alignment() & Qt::AlignBottom) {
-            setY(parentRect.height() - boundingRect().height());
-        } else {
-            setY((parentRect.height() - boundingRect().height()) / 2);
-        }
+    QPointF position = pos();
+    if(alignment() & Qt::AlignLeft) {
+        position.setX(0);
+    } else if(alignment() & Qt::AlignRight) {
+        position.setX(parentRect.width() - boundingRect().width());
+    } else {
+        position.setX((parentRect.width() - boundingRect().width()) / 2);
     }
+
+    if(alignment() & Qt::AlignTop) {
+        position.setY(0);
+    } else if(alignment() & Qt::AlignBottom) {
+        position.setY(parentRect.height() - boundingRect().height());
+    } else {
+        position.setY((parentRect.height() - boundingRect().height()) / 2);
+    }
+    setPos(position);
 }

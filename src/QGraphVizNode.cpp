@@ -34,9 +34,7 @@
 QGraphVizNode::QGraphVizNode(node_t *node, QGraphicsItem * parent) :
     QGraphicsItemGroup(parent),
     m_RectItem(NULL),
-    m_LabelItem(NULL),
-    m_Width(0.0),
-    m_Height(0.0)
+    m_LabelItem(NULL)
 {
     Agnodeinfo_t &nodeInfo = node->u;
 
@@ -45,8 +43,7 @@ QGraphVizNode::QGraphVizNode(node_t *node, QGraphicsItem * parent) :
     // Size and location
     setWidth(nodeInfo.width * 72);             // 72 pixels per inch
     setHeight(nodeInfo.height * 72);
-    setX(nodeInfo.coord.x - width()/2);        // Coordinates are at centerpoint
-    setY(-(nodeInfo.coord.y - height()/2));
+    setPos(nodeInfo.coord.x - width()/2, -(nodeInfo.coord.y - height()/2));
 
     //TODO: Node color
     m_RectItem->setBrush((Qt::GlobalColor)(node->id % 16 + 2));
@@ -54,48 +51,68 @@ QGraphVizNode::QGraphVizNode(node_t *node, QGraphicsItem * parent) :
     if(node->u.label) {
         m_LabelItem = new QGraphVizLabel(node->u.label, this);
     }
+
+    if(nodeInfo.xlabel) {
+        setToolTip(nodeInfo.xlabel->text);
+    }
 }
 
 qreal QGraphVizNode::width() const
 {
-    return m_Width;
+    if(!m_RectItem) {
+        return 0.0;
+    }
+
+    return m_RectItem->rect().width();
 }
 
 void QGraphVizNode::setWidth(qreal width)
 {
-    if(width == m_Width) {
+    if(!m_RectItem) {
         return;
     }
 
-    m_Width = width;
+    QRectF rect = m_RectItem->rect();
+
+    if(width == rect.width()) {
+        return;
+    }
+
+    rect.setWidth(width);
+    m_RectItem->setRect(rect);
 
     updateDimensions();
 }
 
 qreal QGraphVizNode::height() const
 {
-    return m_Height;
+    if(!m_RectItem) {
+        return 0.0;
+    }
+
+    return m_RectItem->rect().height();
 }
 
 void QGraphVizNode::setHeight(qreal height)
 {
-    if(height == m_Height) {
+    if(!m_RectItem) {
         return;
     }
 
-    m_Height = height;
+    QRectF rect = m_RectItem->rect();
+
+    if(height == rect.height()) {
+        return;
+    }
+
+    rect.setHeight(height);
+    m_RectItem->setRect(rect);
 
     updateDimensions();
 }
 
 void QGraphVizNode::updateDimensions()
 {
-    // Update the rectangle object
-    QRectF rect = m_RectItem->rect();
-    rect.setWidth(width());
-    rect.setHeight(height());
-    m_RectItem->setRect(rect);
-
     if(m_LabelItem) {
         m_LabelItem->updateDimensions();
     }

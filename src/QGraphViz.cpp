@@ -212,14 +212,13 @@ QGraphicsScene *QGraphViz::renderScene(QWidget *parent)
 
     node_t *node = agfstnode(m_Graph);
     while(node) {
-        scene->addItem(new QGraphVizNode(node));
-
         Agedge_t *edge = agfstedge(m_Graph, node);
         while(edge) {
             scene->addItem(new QGraphVizEdge(edge));
             edge = agnxtedge(m_Graph, edge, node);
         }
 
+        scene->addItem(new QGraphVizNode(node));
         node = agnxtnode(m_Graph, node);
     }
 
