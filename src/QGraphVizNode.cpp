@@ -110,6 +110,8 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 
     if(collapsed()) {
         //TODO: Draw differently to indicate collapsed node
+        painter->setPen(Qt::red);
+        painter->drawRect(boundingRect().adjusted(-10,-10,10,10));
     }
 
     const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());

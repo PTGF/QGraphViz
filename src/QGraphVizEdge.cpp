@@ -27,6 +27,7 @@
 
 #include "QGraphVizEdge.h"
 #include "QGraphViz.h"
+#include "QGraphVizNode.h"
 
 static const double Pi = 3.14159265358979323846264338327950288419717;
 static double TwoPi = 2.0 * Pi;
@@ -90,6 +91,10 @@ QRectF QGraphVizEdge::boundingRect() const
 
 void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
+    if(head()->collapsed() || !head()->isVisible()) {
+        return;
+    }
+
     const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
 
     Agedgeinfo_t &edgeInfo = m_GraphVizEdge->u;
@@ -160,6 +165,8 @@ void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 
         foreach(textlabel_t *label, labels) {
             QPointF labelPosition = m_GraphViz->transformPoint(label->pos) - pos();
+
+            labelPosition += QPointF(3,0);  //HACK: Adjust away from edge line
 
             // Set the font parameters
             QFont font = painter->font();
