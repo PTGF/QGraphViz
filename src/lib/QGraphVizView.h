@@ -47,6 +47,9 @@ public:
     explicit QGraphVizView(QGraphicsScene * scene, QWidget * parent = 0);
 
 signals:
+//    void nodeSelected(QGraphVizNode *node);
+//    void nodeClicked(QGraphVizNode *node);
+//    void nodeDoubleClicked(QGraphVizNode *node);
 
 public slots:
     void zoomIn();
@@ -67,6 +70,8 @@ protected:
     virtual void mousePressEvent(QMouseEvent *event);
     virtual void mouseReleaseEvent(QMouseEvent *event);
     virtual void mouseClickEvent(QMouseEvent *event);
+
+    virtual void keyPressEvent(QKeyEvent *event);
 
 private:
     qreal m_Scale;

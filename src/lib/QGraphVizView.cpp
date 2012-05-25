@@ -57,8 +57,8 @@ void QGraphVizView::init()
     setOptimizationFlags(QGraphicsView::DontSavePainterState);
     setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
     setMouseTracking(true);
-    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
 
+    setTransformationAnchor(QGraphicsView::AnchorViewCenter);
 
     m_PictureInPicture = new QGraphVizPIP(scene(), this);
     m_PictureInPicture->setMaximumSize(width(), height()/2);
@@ -107,6 +107,39 @@ void QGraphVizView::setZoom(qreal zoom)
     m_PictureInPicture->setViewPortRect(viewPortRect);
 }
 
+void QGraphVizView::keyPressEvent(QKeyEvent *event)
+{
+    if(event->matches(QKeySequence::ZoomIn)) {
+        zoomIn();
+        event->accept();
+        return;
+    } else if(event->matches(QKeySequence::ZoomOut)) {
+        zoomOut();
+        event->accept();
+        return;
+    } else if(event->matches(QKeySequence::MoveToPreviousPage)) {
+        verticalScrollBar()->triggerAction(QAbstractSlider::SliderToMinimum);
+        event->accept();
+        return;
+    } else if(event->matches(QKeySequence::MoveToNextPage)) {
+        verticalScrollBar()->triggerAction(QAbstractSlider::SliderToMaximum);
+        event->accept();
+        return;
+    } else if(event->matches(QKeySequence::MoveToStartOfLine)) {
+        horizontalScrollBar()->triggerAction(QAbstractSlider::SliderToMinimum);
+        event->accept();
+        return;
+    } else if(event->matches(QKeySequence::MoveToEndOfLine)) {
+        horizontalScrollBar()->triggerAction(QAbstractSlider::SliderToMaximum);
+        event->accept();
+        return;
+    }
+
+    // Regular scrolling (up,down,left,right) is handled by the parent just fine.
+
+    QGraphicsView::keyPressEvent(event);
+}
+
 void QGraphVizView::mousePressEvent(QMouseEvent *event)
 {
     m_LastMousePressPosition = m_MousePressPosition = event->pos();
@@ -137,8 +170,8 @@ void QGraphVizView::mouseReleaseEvent(QMouseEvent *event)
         }
     }
 
-    m_MouseLeftPressed = false;
-    m_MouseMidPressed = false;
+    m_MouseLeftPressed  = false;
+    m_MouseMidPressed   = false;
     m_MouseRightPressed = false;
 
     // The event::buttons() is always 0; so the mouseMoveEvent simply processes as a no button situation
@@ -165,9 +198,7 @@ void QGraphVizView::mouseMoveEvent(QMouseEvent *event)
         if(event->modifiers() == Qt::ControlModifier) {
             viewport()->setCursor(Qt::SizeAllCursor);
 
-            setTransformationAnchor(QGraphicsView::AnchorViewCenter);
             zoom(delta.y() / 120.0);
-            setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
 
         } else if(event->modifiers() == Qt::NoModifier) {
             viewport()->setCursor(Qt::ClosedHandCursor);
@@ -182,13 +213,13 @@ void QGraphVizView::mouseMoveEvent(QMouseEvent *event)
 
 void QGraphVizView::mouseClickEvent(QMouseEvent *event)
 {
-    QGraphicsItem *item = itemAt(event->pos());
-    if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
-        QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
-        if(node && node->isVisible() && !node->transparent()) {
-            node->setSelected(true);
-        }
-    }
+//    QGraphicsItem *item = itemAt(event->pos());
+//    if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
+//        QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
+//        if(node && node->isVisible() && !node->transparent()) {
+//            node->setSelected(true);
+//        }
+//    }
 }
 
 
@@ -215,7 +246,10 @@ void QGraphVizView::scrollContentsBy(int dx, int dy)
 void QGraphVizView::wheelEvent(QWheelEvent *event)
 {
     qreal delta = event->delta() / 120.0;
+
+    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     zoom(delta);
+    setTransformationAnchor(QGraphicsView::AnchorViewCenter);
 }
 
 void QGraphVizView::zoom(qreal delta)
