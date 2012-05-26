@@ -114,21 +114,24 @@ void QGraphVizPIP::drawForeground(QPainter *painter, const QRectF &rect)
 
 void QGraphVizPIP::updateViewPortRect()
 {
+    const int maxWidth = qMax(maximumWidth(), 100);
+    const int maxHeight = qMax(maximumHeight(), 100);
+
     QSize size;
     qreal aspectRatio = sceneRect().width() / sceneRect().height();
     if(aspectRatio > 1.0) {
-        size.setWidth(maximumWidth());
-        size.setHeight(maximumWidth() / aspectRatio);
-        if(size.height() > maximumHeight()) {
-            size.setWidth(maximumHeight() * aspectRatio);
-            size.setHeight(maximumHeight());
+        size.setWidth(maxWidth);
+        size.setHeight(maxWidth / aspectRatio);
+        if(size.height() > maxHeight) {
+            size.setWidth(maxHeight * aspectRatio);
+            size.setHeight(maxHeight);
         }
     } else {
-        size.setWidth(maximumHeight() * aspectRatio);
-        size.setHeight(maximumHeight());
-        if(size.width() > maximumWidth()) {
-            size.setWidth(maximumWidth());
-            size.setHeight(maximumWidth() / aspectRatio);
+        size.setWidth(maxHeight * aspectRatio);
+        size.setHeight(maxHeight);
+        if(size.width() > maxWidth) {
+            size.setWidth(maxWidth);
+            size.setHeight(maxWidth / aspectRatio);
         }
     }
     if(this->size() != size) {
