@@ -40,6 +40,7 @@ QGraphVizNode::QGraphVizNode(node_t *node, QGraphVizScene *graphViz, QGraphicsIt
     m_HeadEdgesInitialized(false),
     m_TailEdgesInitialized(false)
 {
+    setZValue(1.0);
     updateGeometry();
     setFlag(QGraphicsItem::ItemIsSelectable, true);
 }
