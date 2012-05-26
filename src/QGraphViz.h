@@ -36,7 +36,7 @@
 #include "QGraphVizAttributes.h"
 
 
-class QGraphViz : public QObject
+class QGraphViz : public QGraphicsScene
 {
     Q_OBJECT
 public:
@@ -49,15 +49,11 @@ public:
     QGraphVizNodeAttributes &defaultNodeAttributes();
     QGraphVizEdgeAttributes &defaultEdgeAttributes();
 
-    QByteArray renderedContent();
-
-    QString renderEngine();
-    void setRenderEngine(QString renderEngine);
-
-    QGraphicsScene *renderScene(QWidget *parent);
+    QByteArray exportContent(QString renderEngine = QString("xdot"));
 
     QString layoutEngine();
     void setLayoutEngine(QString layoutEngine);
+
 
 signals:
     void changed();
@@ -70,6 +66,9 @@ protected slots:
     void doRender();
 
 protected:
+    graph_t *graph() { return m_Graph; }
+    QPointF transformPoint(const QPointF &point);
+    QPointF transformPoint(qreal x, qreal y);
 
 private:
     static GVC_t *m_Context;
@@ -81,11 +80,15 @@ private:
     QGraphVizNodeAttributes m_DefaultNodeAttributes;
     QGraphVizEdgeAttributes m_DefaultEdgeAttributes;
 
+    QPointF m_Translate;
+    QPointF m_Scale;
+
     QString m_LayoutEngine;
     bool m_LayoutDone;
-    QString m_RenderEngine;
-    QByteArray m_RenderedContent;
 
+    friend class QGraphVizNode;
+    friend class QGraphVizEdge;
+    friend class QGraphVizLabel;
 };
 
 #endif // QGRAPHVIZ_H

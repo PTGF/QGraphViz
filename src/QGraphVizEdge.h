@@ -34,17 +34,20 @@
 #include <graphviz/types.h>
 
 class QGraphVizLabel;
-class QGraphVizScene;
+class QGraphViz;
 
 class QGraphVizEdge : public QGraphicsItemGroup
 {
 public:
-    explicit QGraphVizEdge(edge_t *edge, QGraphVizScene *scene, QGraphicsItem * parent = 0);
+    explicit QGraphVizEdge(edge_t *edge, QGraphViz *graphViz, QGraphicsItem * parent = 0);
 
 protected:
     void updateDimensions();
 
 private:
+    edge_t *m_GraphVizEdge;
+    QGraphViz *m_GraphViz;
+
     QGraphicsPathItem *m_PathItem;
 
     QGraphVizLabel *m_Label;

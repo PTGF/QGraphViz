@@ -34,18 +34,18 @@
 #include <graphviz/types.h>
 
 class QGraphVizLabel;
-class QGraphVizScene;
+class QGraphViz;
 
 class QGraphVizNode : public QGraphicsItemGroup
 {
 public:
-    explicit QGraphVizNode(node_t *node, QGraphVizScene *scene, QGraphicsItem * parent = 0);
+    explicit QGraphVizNode(node_t *node, QGraphViz *graphViz, QGraphicsItem * parent = 0);
 
     // Node properties
     qreal width() const;
-    void setWidth(qreal width);
+    void setWidth(qreal width, bool update = true);
     qreal height() const;
-    void setHeight(qreal height);
+    void setHeight(qreal height, bool update = true);
 
     QRectF boundingRect() const;
 
@@ -53,6 +53,8 @@ protected:
     void updateDimensions();
 
 private:
+    node_t *m_GraphVizNode;
+    QGraphViz *m_GraphViz;
     QGraphicsRectItem *m_RectItem;
     QGraphVizLabel *m_LabelItem;
 };

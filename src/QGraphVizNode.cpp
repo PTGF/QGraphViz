@@ -27,37 +27,18 @@
 
 #include "QGraphVizNode.h"
 #include "QGraphVizLabel.h"
-#include "QGraphVizScene.h"
+#include "QGraphViz.h"
 
 #include <QtDebug>
 
-QGraphVizNode::QGraphVizNode(node_t *node, QGraphVizScene *scene, QGraphicsItem * parent) :
+QGraphVizNode::QGraphVizNode(node_t *node, QGraphViz *graphViz, QGraphicsItem * parent) :
     QGraphicsItemGroup(parent),
-    m_RectItem(NULL),
-    m_LabelItem(NULL)
+    m_GraphVizNode(node),
+    m_GraphViz(graphViz),
+    m_RectItem(new QGraphicsRectItem(this)),
+    m_LabelItem(new QGraphVizLabel(m_GraphViz, this))
 {
-    Agnodeinfo_t &nodeInfo = node->u;
-
-    m_RectItem = new QGraphicsRectItem(this);
-
-    // Size and location
-    setWidth(nodeInfo.width * 72);             // 72 pixels per inch
-    setHeight(nodeInfo.height * 72);
-
-    QPointF position = scene->transformPoint(nodeInfo.coord.x, nodeInfo.coord.y);
-    position -= QPointF(width()/2, height()/2);
-    setPos(position);
-
-    //TODO: Node color
-    m_RectItem->setBrush((Qt::GlobalColor)(node->id % 16 + 2));
-
-    if(node->u.label) {
-        m_LabelItem = new QGraphVizLabel(node->u.label, scene, this);
-    }
-
-    if(nodeInfo.xlabel) {
-        setToolTip(nodeInfo.xlabel->text);
-    }
+    updateDimensions();
 }
 
 qreal QGraphVizNode::width() const
@@ -69,7 +50,7 @@ qreal QGraphVizNode::width() const
     return m_RectItem->rect().width();
 }
 
-void QGraphVizNode::setWidth(qreal width)
+void QGraphVizNode::setWidth(qreal width, bool update)
 {
     if(!m_RectItem) {
         return;
@@ -84,7 +65,9 @@ void QGraphVizNode::setWidth(qreal width)
     rect.setWidth(width);
     m_RectItem->setRect(rect);
 
-    updateDimensions();
+    if(update) {
+        updateDimensions();
+    }
 }
 
 qreal QGraphVizNode::height() const
@@ -96,7 +79,7 @@ qreal QGraphVizNode::height() const
     return m_RectItem->rect().height();
 }
 
-void QGraphVizNode::setHeight(qreal height)
+void QGraphVizNode::setHeight(qreal height, bool update)
 {
     if(!m_RectItem) {
         return;
@@ -111,13 +94,32 @@ void QGraphVizNode::setHeight(qreal height)
     rect.setHeight(height);
     m_RectItem->setRect(rect);
 
-    updateDimensions();
+    if(update) {
+        updateDimensions();
+    }
 }
 
 void QGraphVizNode::updateDimensions()
 {
-    if(m_LabelItem) {
-        m_LabelItem->updateDimensions();
+    Agnodeinfo_t &nodeInfo = m_GraphVizNode->u;
+
+    // Size and location
+    setWidth(nodeInfo.width * 72, false);             // 72 pixels per inch
+    setHeight(nodeInfo.height * 72, false);
+
+    QPointF position = m_GraphViz->transformPoint(nodeInfo.coord.x, nodeInfo.coord.y);
+    position -= QPointF(width()/2, height()/2);
+    setPos(position);
+
+    //TODO: Node color from GraphViz
+    m_RectItem->setBrush((Qt::GlobalColor)(m_GraphVizNode->id % 16 + 2));
+
+    m_LabelItem->setGraphVizLabel(m_GraphVizNode->u.label);
+
+    if(nodeInfo.xlabel) {
+        setToolTip(nodeInfo.xlabel->text);
+    } else {
+        setToolTip(QString());
     }
 }
 
@@ -125,4 +127,3 @@ QRectF QGraphVizNode::boundingRect() const
 {
     return QRectF(-width()/2.0, -height()/2.0, width(), height());
 }
-

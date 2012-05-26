@@ -28,7 +28,7 @@
 #include "QGraphVizEdge.h"
 
 #include "QGraphVizLabel.h"
-#include "QGraphVizScene.h"
+#include "QGraphViz.h"
 
 #ifdef QT_DEBUG
 #include <QtDebug>
@@ -39,76 +39,77 @@ static double TwoPi = 2.0 * Pi;
 static double ThirdPi = Pi / 3;
 static const qreal ArrowSize = 10;
 
-QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphVizScene *scene, QGraphicsItem * parent) :
+QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphViz *graphViz, QGraphicsItem * parent) :
     QGraphicsItemGroup(parent),
-    m_PathItem(NULL),
-    m_Label(NULL),
-    m_LabelHead(NULL),
-    m_LabelTail(NULL)
+    m_GraphVizEdge(edge),
+    m_GraphViz(graphViz),
+    m_PathItem(new QGraphicsPathItem(this)),
+    m_Label(new QGraphVizLabel(m_GraphViz, this)),
+    m_LabelHead(new QGraphVizLabel(m_GraphViz, this)),
+    m_LabelTail(new QGraphVizLabel(m_GraphViz, this))
 {
-    Agedgeinfo_t &edgeInfo = edge->u;
-
-    m_PathItem = new QGraphicsPathItem(this);
-
-    QPainterPath path;
-    for(int i=0; i < edgeInfo.spl->size; ++i) {
-        bezier bez = edgeInfo.spl->list[i];
-
-        /*! \note Hell if I know why they don't use 'sp' as the start point, and instead stick the damn thing in the
-                  first point of the bezier array (each bezier is 3 points) */
-
-        QPointF startPoint = scene->transformPoint(bez.list[0].x, bez.list[0].y);
-        QPointF endPoint = scene->transformPoint(bez.ep.x, bez.ep.y) - startPoint;
-
-        QPointF point1, point2, point3;
-        for(int j=1; j < bez.size; ++j) {
-            point1 = scene->transformPoint(bez.list[j].x, bez.list[j].y) - startPoint; ++j;
-            point2 = scene->transformPoint(bez.list[j].x, bez.list[j].y) - startPoint; ++j;
-            point3 = scene->transformPoint(bez.list[j].x, bez.list[j].y) - startPoint;
-            path.cubicTo(point1, point2, point3);
-        }
-
-        path.lineTo(endPoint);
-//        path.closeSubpath();
-
-        // Add an arrowhead
-        QLineF line(endPoint, point3);
-        if(!qFuzzyCompare(line.length(), qreal(0.0))) {  // Taken from Qt4 edge example
-            qreal angle = acos(line.dx() / line.length());
-            if(line.dy() >= 0) {
-                angle = TwoPi - angle;
-            }
-
-            QPointF arrowP1 = QPointF(sin(angle + ThirdPi) * ArrowSize, cos(angle + ThirdPi) * ArrowSize);
-            path.moveTo(endPoint);
-            path.lineTo(arrowP1 + endPoint);
-
-            QPointF arrowP2 = QPointF(sin(angle + Pi - ThirdPi) * ArrowSize, cos(angle + Pi - ThirdPi) * ArrowSize);
-            path.moveTo(endPoint);
-            path.lineTo(arrowP2 + endPoint);
-        }
-
-        m_PathItem->setPos(startPoint);
-    }
-    QPen pen(Qt::black);
-    pen.setWidthF(edgeInfo.weight * 1.5);
-    m_PathItem->setPen(pen);
-    m_PathItem->setPath(path);
-
-    if(edgeInfo.label) {
-        m_Label = new QGraphVizLabel(edgeInfo.label, scene, this);
-    }
-    if(edgeInfo.head_label) {
-        m_LabelHead = new QGraphVizLabel(edgeInfo.head_label, scene, this);
-    }
-    if(edgeInfo.tail_label) {
-        m_LabelTail = new QGraphVizLabel(edgeInfo.tail_label, scene, this);
-    }
-    if(edgeInfo.xlabel) {
-        setToolTip(edgeInfo.xlabel->text);
-    }
+    updateDimensions();
 }
 
 void QGraphVizEdge::updateDimensions()
 {
+    Agedgeinfo_t &edgeInfo = m_GraphVizEdge->u;
+
+    if(edgeInfo.spl) {
+        QPainterPath path;
+        for(int i=0; i < edgeInfo.spl->size; ++i) {
+            bezier bez = edgeInfo.spl->list[i];
+
+            /*! \note Hell if I know why they don't use 'sp' as the start point, and instead stick the damn thing in the
+                      first point of the bezier array (each bezier is 3 points) */
+
+            QPointF startPoint = m_GraphViz->transformPoint(bez.list[0].x, bez.list[0].y);
+            QPointF endPoint = m_GraphViz->transformPoint(bez.ep.x, bez.ep.y) - startPoint;
+
+            QPointF point1, point2, point3;
+            for(int j=1; j < bez.size; ++j) {
+                point1 = m_GraphViz->transformPoint(bez.list[j].x, bez.list[j].y) - startPoint; ++j;
+                point2 = m_GraphViz->transformPoint(bez.list[j].x, bez.list[j].y) - startPoint; ++j;
+                point3 = m_GraphViz->transformPoint(bez.list[j].x, bez.list[j].y) - startPoint;
+                path.cubicTo(point1, point2, point3);
+            }
+
+            path.lineTo(endPoint);
+    //        path.closeSubpath();
+
+            // Add an arrowhead
+            QLineF line(endPoint, point3);
+            if(!qFuzzyCompare(line.length(), qreal(0.0))) {  // Taken from Qt4 edge example
+                qreal angle = acos(line.dx() / line.length());
+                if(line.dy() >= 0) {
+                    angle = TwoPi - angle;
+                }
+
+                QPointF arrowP1 = QPointF(sin(angle + ThirdPi) * ArrowSize, cos(angle + ThirdPi) * ArrowSize);
+                path.moveTo(endPoint);
+                path.lineTo(arrowP1 + endPoint);
+
+                QPointF arrowP2 = QPointF(sin(angle + Pi - ThirdPi) * ArrowSize, cos(angle + Pi - ThirdPi) * ArrowSize);
+                path.moveTo(endPoint);
+                path.lineTo(arrowP2 + endPoint);
+            }
+
+            m_PathItem->setPos(startPoint);
+        }
+        QPen pen(Qt::black);
+        pen.setWidthF(edgeInfo.weight * 1.5);
+        m_PathItem->setPen(pen);
+        m_PathItem->setPath(path);
+    }
+
+    // Update label objects
+    m_Label->setGraphVizLabel(edgeInfo.label);
+    m_LabelHead->setGraphVizLabel(edgeInfo.head_label);
+    m_LabelTail->setGraphVizLabel(edgeInfo.tail_label);
+
+    if(edgeInfo.xlabel) {
+        setToolTip(edgeInfo.xlabel->text);
+    } else {
+        setToolTip(QString());
+    }
 }

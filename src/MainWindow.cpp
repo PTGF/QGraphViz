@@ -45,21 +45,19 @@ MainWindow::MainWindow(QWidget *parent) :
         QByteArray data = file.readAll();
         file.close();
 
-        QGraphViz gv(QString(data), this);
+        QGraphViz *gv = new QGraphViz(QString(data), this);
 
-        QGraphicsScene *scene = gv.renderScene(this);
-        QGraphicsView *view = new QGraphicsView(scene);
+        QGraphicsView *view = new QGraphicsView(gv);
         view->setRenderHint(QPainter::Antialiasing);       // Looks like crap without antialiasing
         ui->tabWidget->setCurrentIndex(ui->tabWidget->addTab(view, "View"));
 
-        QByteArray content = gv.renderedContent();
+        QByteArray content = gv->exportContent();
         ui->textEdit->setText(QString(content));
 
-        gv.setRenderEngine("png");
-        content = gv.renderedContent();
-        QPixmap pixmap;
-        pixmap.loadFromData(content);
-        ui->label->setPixmap(pixmap.scaled(QSize(512,768), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+//        content = gv->exportContent("png");
+//        QPixmap pixmap;
+//        pixmap.loadFromData(content);
+//        ui->label->setPixmap(pixmap.scaled(QSize(512,768), Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
 }
 

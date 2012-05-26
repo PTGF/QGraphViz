@@ -35,21 +35,19 @@
   #include <QtDebug>
 #endif
 
-#include "QGraphVizScene.h"
 #include "QGraphVizNode.h"
 #include "QGraphVizEdge.h"
 
 GVC_t *QGraphViz::m_Context = gvContext();
 
 QGraphViz::QGraphViz(QString content, QObject *parent) :
-    QObject(parent),
+    QGraphicsScene(parent),
     m_Graph(NULL),
     m_GraphAttributes(),
     m_DefaultNodeAttributes(),
     m_DefaultEdgeAttributes(),
     m_LayoutEngine("dot"),
-    m_LayoutDone(false),
-    m_RenderEngine("xdot")
+    m_LayoutDone(false)
 {
     if(content.isEmpty()) {
         return;
@@ -67,11 +65,18 @@ QGraphViz::QGraphViz(QString content, QObject *parent) :
 
         m_DefaultEdgeAttributes.setEdge(agprotoedge(m_Graph));
         connect(&m_DefaultEdgeAttributes, SIGNAL(changed()), this, SLOT(onChanged()));
+
+        doRender();
     }
 }
 
 QGraphViz::~QGraphViz()
 {
+    if(m_LayoutDone) {
+        gvFreeLayout(m_Context, m_Graph);
+        m_LayoutDone = false;
+    }
+
     if(m_Graph) {
         agclose(m_Graph);
         m_Graph = NULL;
@@ -103,38 +108,30 @@ void QGraphViz::doLayout()
         throw tr("Layout failed");
     }
 
+    m_Translate = QPointF(-m_Graph->u.bb.LL.x, -m_Graph->u.bb.UR.y);
+    m_Scale = QPointF(1.0, -1.0);
+
     m_LayoutDone = true;
 }
 
 void QGraphViz::doRender()
 {
-    if(!m_RenderedContent.isEmpty()) {
-        return;
-    }
+    doLayout();
 
-    if(!m_LayoutDone) {
-        doLayout();
-    }
+    //TODO: Need to only refresh nodes and edges that already exist
 
-    char *content;
-    unsigned int length;
-    if(gvRenderData(m_Context, m_Graph, m_RenderEngine.toLocal8Bit().data(), &content, &length)) {
-        throw tr("Failed to render.");
-    }
-
-    m_RenderedContent = QByteArray(content, length);
-
-    free(content);
-
-    Agnode_t *node = agfstnode(m_Graph);
+    node_t *node = agfstnode(graph());
     while(node) {
-        Agedge_t *edge = agfstedge(m_Graph, node);
-        while(edge) {
-            edge = agnxtedge(m_Graph, edge, node);
-        }
-        node = agnxtnode(m_Graph, node);
-    }
+        addItem(new QGraphVizNode(node, this));
 
+        Agedge_t *edge = agfstedge(graph(), node);
+        while(edge) {
+            addItem(new QGraphVizEdge(edge, this));
+            edge = agnxtedge(graph(), edge, node);
+        }
+
+        node = agnxtnode(graph(), node);
+    }
 }
 
 void QGraphViz::onChanged()
@@ -144,37 +141,14 @@ void QGraphViz::onChanged()
         m_LayoutDone = false;
     }
 
-    if(!m_RenderedContent.isEmpty()) {
-        m_RenderedContent = QByteArray();
-    }
-}
-
-/*! dot; xdot; png; svg; plain; etc.
- */
-QString QGraphViz::renderEngine()
-{
-    return m_RenderEngine;
-}
-
-/*! dot; xdot; png; svg; plain; etc.
- */
-void QGraphViz::setRenderEngine(QString renderEngine)
-{
-    if(renderEngine == m_RenderEngine) {
-        return;
-    }
-
-    m_RenderEngine = renderEngine;
-
-    onChanged();
-    emit changed();
+    doRender();
 }
 
 /*! dot; neato; circo; fdp; osage; sfdp; twopi
  */
 QString QGraphViz::layoutEngine()
 {
-    return m_RenderEngine;
+    return m_LayoutEngine;
 }
 
 /*! dot; neato; circo; fdp; osage; sfdp; twopi
@@ -191,38 +165,40 @@ void QGraphViz::setLayoutEngine(QString layoutEngine)
     emit changed();
 }
 
-QByteArray QGraphViz::renderedContent()
+/*! dot; xdot; png; svg; plain; etc.
+ */
+QByteArray QGraphViz::exportContent(QString renderEngine)
 {
-    if(m_RenderedContent.isEmpty()) {
-        doRender();
+    doLayout();
+
+    char *content;
+    unsigned int length;
+    if(gvRenderData(m_Context, m_Graph, renderEngine.toLocal8Bit().data(), &content, &length)) {
+        throw tr("Failed to render.");
     }
 
-    return m_RenderedContent;
-}
+    QByteArray renderedContent = QByteArray(content, length);
 
+    free(content);
 
-QGraphicsScene *QGraphViz::renderScene(QWidget *parent)
-{
-    if(!m_LayoutDone) {
-        doLayout();
-    }
-
-    QPointF translate(-m_Graph->u.bb.LL.x, -m_Graph->u.bb.UR.y);
-    QPointF scale(1.0, -1.0);
-    QGraphVizScene *scene = new QGraphVizScene(translate, scale, parent);
-
-    node_t *node = agfstnode(m_Graph);
+    Agnode_t *node = agfstnode(m_Graph);
     while(node) {
-        scene->addItem(new QGraphVizNode(node, scene));
-
         Agedge_t *edge = agfstedge(m_Graph, node);
         while(edge) {
-            scene->addItem(new QGraphVizEdge(edge, scene));
             edge = agnxtedge(m_Graph, edge, node);
         }
-
         node = agnxtnode(m_Graph, node);
     }
 
-    return (QGraphicsScene *)scene;
+    return renderedContent;
+}
+
+QPointF QGraphViz::transformPoint(const QPointF &point)
+{
+    return transformPoint(point.x(), point.y());
+}
+
+QPointF QGraphViz::transformPoint(qreal x, qreal y)
+{
+    return QPointF((x + m_Translate.x()) * m_Scale.x(), (y + m_Translate.y()) * m_Scale.y());
 }

@@ -34,29 +34,26 @@
 #include <graphviz/types.h>
 
 class QGraphVizNode;
-class QGraphVizScene;
+class QGraphViz;
 
 class QGraphVizLabel : public QGraphicsSimpleTextItem
 {
 public:
-    explicit QGraphVizLabel(textlabel_t *label, QGraphVizScene *scene, QGraphicsItem * parent = NULL);
+    explicit QGraphVizLabel(QGraphViz *graphViz, QGraphicsItem * parent = NULL);
+    void setGraphVizLabel(textlabel_t *label);
 
-    // Label properties
+protected:
+    void updateDimensions();
+
     void setText(const QString &text);
     void setFont(const QFont &font);
     Qt::AlignmentFlag alignment() const;
     void setAlignment(const Qt::AlignmentFlag &alignment);
 
-protected:
-    void updateDimensions();
-
 private:
+    textlabel_t *m_GraphVizLabel;
+    QGraphViz *m_GraphViz;
     Qt::AlignmentFlag m_Alignment;
-
-    bool m_UpdateDimensions;
-
-    friend class QGraphVizNode;
-    friend class QGraphVizEdge;
 };
 
 #endif // QGRAPHVIZLABEL_H
