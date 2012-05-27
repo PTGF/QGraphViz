@@ -296,7 +296,7 @@ void QGraphVizEdge::updateLabel()
     //! \note This was set manually in the STAT GUI, so I'm doing the same here
     m_LabelFont.setFamily("sans-serif");
 #endif
-    m_LabelFont.setPointSizeF(label->fontsize * .6);
+    m_LabelFont.setPointSizeF(label->fontsize * .55);
 
     m_LabelColor = QColor(label->fontcolor);
 
