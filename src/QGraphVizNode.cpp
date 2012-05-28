@@ -133,7 +133,7 @@ void QGraphVizNode::updateDimensions()
 QRectF QGraphVizNode::boundingRect() const
 {
     QPointF size(m_GraphVizNode->u.width * 72, m_GraphVizNode->u.height * 72);
-    return QRectF(0, 0, size.x(), size.y());
+    return QRectF(-size/2, size/2);
 }
 
 void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -142,29 +142,30 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     setPos(position);
 
     QPainterPath path;
-    if(m_GraphVizNode->u.shape) {
-//        shape_desc *shapeDescription = m_GraphVizNode->u.shape;
 
-        QPolygonF polygon;
-        polygon_t *poly = (polygon_t*)m_GraphVizNode->u.shape_info;
-        for(int i=0; i < poly->sides; ++i) {
-            polygon << m_GraphViz->transformPoint(poly->vertices[i]);
-        }
-        polygon << m_GraphViz->transformPoint(poly->vertices[0]);    // Close the polygon
+    //TODO: Need to figure out translation of points from GraphViz to our coordinates
+//    if(m_GraphVizNode->u.shape) {
+////        shape_desc *shapeDescription = m_GraphVizNode->u.shape;
 
-        path.moveTo(m_GraphViz->transformPoint(poly->vertices[0]));
-        path.addPolygon(polygon);
+//        QPolygonF polygon;
+//        polygon_t *poly = (polygon_t*)m_GraphVizNode->u.shape_info;
+//        for(int i=0; i < poly->sides; ++i) {
+//            polygon << m_GraphViz->transformPoint(poly->vertices[i]);
+//        }
+//        polygon << m_GraphViz->transformPoint(poly->vertices[0]);    // Close the polygon
 
-        qDebug() << boundingRect() << m_GraphViz->transformPoint(poly->vertices[0]) << position;
+//        path.moveTo(m_GraphViz->transformPoint(poly->vertices[0]));
+//        path.addPolygon(polygon);
 
-    } else {
-        qWarning() << "No shape data";
-    }
+//        qDebug() << boundingRect() << m_GraphViz->transformPoint(poly->vertices[0]) << position;
 
-//    path.addRect(10,10,10,10);
+//    } else {
+//        qWarning() << "No shape data";
+//    }
+
+    path.addRect(boundingRect());
 
     painter->setPen(Qt::blue);
     painter->setBrush(Qt::red);
     painter->drawPath(path);
-
 }
