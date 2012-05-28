@@ -118,15 +118,20 @@ void QGraphViz::doRender()
 {
     doLayout();
 
-    //TODO: Need to only refresh nodes and edges that already exist
-
     node_t *node = agfstnode(graph());
     while(node) {
-        addItem(new QGraphVizNode(node, this));
+
+        if(!containsNode(node->id)) {
+            addItem(new QGraphVizNode(node, this));
+        }
 
         Agedge_t *edge = agfstedge(graph(), node);
         while(edge) {
-            addItem(new QGraphVizEdge(edge, this));
+
+            if(!containsEdge(edge->id)) {
+                addItem(new QGraphVizEdge(edge, this));
+            }
+
             edge = agnxtedge(graph(), edge, node);
         }
 
@@ -193,12 +198,150 @@ QByteArray QGraphViz::exportContent(QString renderEngine)
     return renderedContent;
 }
 
+
+
 QPointF QGraphViz::transformPoint(const QPointF &point)
 {
     return transformPoint(point.x(), point.y());
+}
+
+QPointF QGraphViz::transformPoint(const pointf_s &point)
+{
+    return transformPoint(point.x, point.y);
 }
 
 QPointF QGraphViz::transformPoint(qreal x, qreal y)
 {
     return QPointF((x + m_Translate.x()) * m_Scale.x(), (y + m_Translate.y()) * m_Scale.y());
 }
+
+
+
+QGraphVizNode *QGraphViz::getNode(int GVID)
+{
+    foreach(QGraphicsItem *item, items()) {
+        if(item->type() == QGraphicsItem::UserType + 1) {  // Little more optimized
+            QGraphVizNode *node = dynamic_cast<QGraphVizNode*>(item);
+            if(node) {
+                if(node->getGVID() == GVID) {
+                    return node;
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
+bool QGraphViz::containsNode(int GVID)
+{
+    return (getNode(GVID) != NULL);
+}
+
+QGraphVizEdge *QGraphViz::getEdge(int GVID)
+{
+    foreach(QGraphicsItem *item, items()) {
+        if(item->type() == QGraphicsItem::UserType + 2) {  // Little more optimized
+            QGraphVizEdge *edge = dynamic_cast<QGraphVizEdge*>(item);
+            if(edge) {
+                if(edge->getGVID() == GVID) {
+                    return edge;
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
+bool QGraphViz::containsEdge(int GVID)
+{
+    return (getEdge(GVID) != NULL);
+}
+
+
+
+QByteArray QGraphViz::getHash(Agraph_t *graph)
+{
+    QCryptographicHash md5(QCryptographicHash::Md5);
+    md5.addData((char*)graph, sizeof(Agraph_t));
+
+    //TODO: Add attributes
+    //TODO: Add default node attributes
+    //TODO: Add default edge attributes
+
+    node_t *node = agfstnode(graph);
+    while(node) {
+        md5.addData(getHash(node));
+        Agedge_t *edge = agfstedge(graph, node);
+        while(edge) {
+            md5.addData(getHash(edge));
+            edge = agnxtedge(graph, edge, node);
+        }
+        node = agnxtnode(graph, node);
+    }
+
+    return md5.result();
+}
+
+QByteArray QGraphViz::getHash(Agedge_t *edge)
+{
+    QCryptographicHash md5(QCryptographicHash::Md5);
+    md5.addData((char*)edge, sizeof(Agedge_t));
+
+    //TODO: Add attributes
+
+    // Add splines
+    if(edge->u.spl) {
+        md5.addData((char*)edge->u.spl, sizeof(splines));
+        md5.addData((char*)edge->u.spl->list, edge->u.spl->size * sizeof(bezier));
+    }
+
+    // Add labels
+    if(edge->u.label) {
+        md5.addData(getHash(edge->u.label));
+    }
+    if(edge->u.head_label) {
+        md5.addData(getHash(edge->u.head_label));
+    }
+    if(edge->u.tail_label) {
+        md5.addData(getHash(edge->u.tail_label));
+    }
+    if(edge->u.xlabel) {
+        md5.addData(getHash(edge->u.xlabel));
+    }
+
+    return md5.result();
+}
+
+QByteArray QGraphViz::getHash(Agnode_t *node)
+{
+    QCryptographicHash md5(QCryptographicHash::Md5);
+    md5.addData((char*)node, sizeof(Agnode_t));
+
+    //TODO: Add attributes
+
+    if(node->u.shape) {
+        md5.addData((char*)node->u.shape, sizeof(shape_desc));
+        if(node->u.shape->polygon) {
+            md5.addData((char*)node->u.shape->polygon, sizeof(polygon_t));
+        }
+    }
+
+    // Add labels
+    if(node->u.label) {
+        md5.addData(getHash(node->u.label));
+    }
+    if(node->u.xlabel) {
+        md5.addData(getHash(node->u.xlabel));
+    }
+
+    return md5.result();
+}
+
+QByteArray QGraphViz::getHash(textlabel_t *label)
+{
+    QCryptographicHash md5(QCryptographicHash::Md5);
+    md5.addData((char*)label, sizeof(textlabel_t));
+    return md5.result();
+}
+
+

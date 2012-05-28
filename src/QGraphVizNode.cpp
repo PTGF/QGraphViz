@@ -32,13 +32,20 @@
 #include <QtDebug>
 
 QGraphVizNode::QGraphVizNode(node_t *node, QGraphViz *graphViz, QGraphicsItem * parent) :
-    QGraphicsItemGroup(parent),
+    QGraphicsItem(parent, graphViz),
     m_GraphVizNode(node),
-    m_GraphViz(graphViz),
-    m_RectItem(new QGraphicsRectItem(this)),
-    m_LabelItem(new QGraphVizLabel(m_GraphViz, this))
+    m_GraphViz(graphViz)
 {
-    updateDimensions();
+}
+
+int QGraphVizNode::type() const
+{
+    return UserType + 1;
+}
+
+int QGraphVizNode::getGVID()
+{
+    return m_GraphVizNode->id;
 }
 
 qreal QGraphVizNode::width() const
@@ -112,7 +119,7 @@ void QGraphVizNode::updateDimensions()
     setPos(position);
 
     //TODO: Node color from GraphViz
-    m_RectItem->setBrush((Qt::GlobalColor)(m_GraphVizNode->id % 16 + 2));
+//    m_RectItem->setBrush((Qt::GlobalColor)(m_GraphVizNode->id % 16 + 2));
 
     m_LabelItem->setGraphVizLabel(m_GraphVizNode->u.label);
 
@@ -125,5 +132,39 @@ void QGraphVizNode::updateDimensions()
 
 QRectF QGraphVizNode::boundingRect() const
 {
-    return QRectF(-width()/2.0, -height()/2.0, width(), height());
+    QPointF size(m_GraphVizNode->u.width * 72, m_GraphVizNode->u.height * 72);
+    return QRectF(0, 0, size.x(), size.y());
+}
+
+void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    QPointF position = m_GraphViz->transformPoint(m_GraphVizNode->u.coord);
+    setPos(position);
+
+    QPainterPath path;
+    if(m_GraphVizNode->u.shape) {
+//        shape_desc *shapeDescription = m_GraphVizNode->u.shape;
+
+        QPolygonF polygon;
+        polygon_t *poly = (polygon_t*)m_GraphVizNode->u.shape_info;
+        for(int i=0; i < poly->sides; ++i) {
+            polygon << m_GraphViz->transformPoint(poly->vertices[i]);
+        }
+        polygon << m_GraphViz->transformPoint(poly->vertices[0]);    // Close the polygon
+
+        path.moveTo(m_GraphViz->transformPoint(poly->vertices[0]));
+        path.addPolygon(polygon);
+
+        qDebug() << boundingRect() << m_GraphViz->transformPoint(poly->vertices[0]) << position;
+
+    } else {
+        qWarning() << "No shape data";
+    }
+
+//    path.addRect(10,10,10,10);
+
+    painter->setPen(Qt::blue);
+    painter->setBrush(Qt::red);
+    painter->drawPath(path);
+
 }

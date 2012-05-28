@@ -40,7 +40,7 @@ static double ThirdPi = Pi / 3;
 static const qreal ArrowSize = 10;
 
 QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphViz *graphViz, QGraphicsItem * parent) :
-    QGraphicsItemGroup(parent),
+    QGraphicsItem(parent, graphViz),
     m_GraphVizEdge(edge),
     m_GraphViz(graphViz),
     m_PathItem(new QGraphicsPathItem(this)),
@@ -48,8 +48,19 @@ QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphViz *graphViz, QGraphicsItem * 
     m_LabelHead(new QGraphVizLabel(m_GraphViz, this)),
     m_LabelTail(new QGraphVizLabel(m_GraphViz, this))
 {
-    updateDimensions();
+    preRender();
 }
+
+int QGraphVizEdge::type() const
+{
+    return UserType + 2;
+}
+
+int QGraphVizEdge::getGVID()
+{
+    return m_GraphVizEdge->id;
+}
+
 
 void QGraphVizEdge::updateDimensions()
 {
@@ -63,14 +74,14 @@ void QGraphVizEdge::updateDimensions()
             /*! \note Hell if I know why they don't use 'sp' as the start point, and instead stick the damn thing in the
                       first point of the bezier array (each bezier is 3 points) */
 
-            QPointF startPoint = m_GraphViz->transformPoint(bez.list[0].x, bez.list[0].y);
-            QPointF endPoint = m_GraphViz->transformPoint(bez.ep.x, bez.ep.y) - startPoint;
+            QPointF startPoint = m_GraphViz->transformPoint(bez.list[0]);
+            QPointF endPoint = m_GraphViz->transformPoint(bez.ep) - startPoint;
 
             QPointF point1, point2, point3;
             for(int j=1; j < bez.size; ++j) {
-                point1 = m_GraphViz->transformPoint(bez.list[j].x, bez.list[j].y) - startPoint; ++j;
-                point2 = m_GraphViz->transformPoint(bez.list[j].x, bez.list[j].y) - startPoint; ++j;
-                point3 = m_GraphViz->transformPoint(bez.list[j].x, bez.list[j].y) - startPoint;
+                point1 = m_GraphViz->transformPoint(bez.list[j]) - startPoint; ++j;
+                point2 = m_GraphViz->transformPoint(bez.list[j]) - startPoint; ++j;
+                point3 = m_GraphViz->transformPoint(bez.list[j]) - startPoint;
                 path.cubicTo(point1, point2, point3);
             }
 
@@ -112,4 +123,28 @@ void QGraphVizEdge::updateDimensions()
     } else {
         setToolTip(QString());
     }
+}
+
+void QGraphVizEdge::preRender()
+{
+    // See if the object has changed from the last pre-render
+    static QByteArray lastMD5 = QGraphViz::getHash(m_GraphVizEdge);
+    QByteArray currentMD5 = QGraphViz::getHash(m_GraphVizEdge);
+    if(lastMD5 == currentMD5) {
+        return;
+    }
+    lastMD5 = currentMD5;
+
+
+
+}
+
+QRectF QGraphVizEdge::boundingRect() const
+{
+    return QRectF();
+}
+
+
+void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
 }

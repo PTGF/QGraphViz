@@ -35,6 +35,8 @@
 
 #include "QGraphVizAttributes.h"
 
+class QGraphVizNode;
+class QGraphVizEdge;
 
 class QGraphViz : public QGraphicsScene
 {
@@ -67,8 +69,19 @@ protected slots:
 
 protected:
     graph_t *graph() { return m_Graph; }
+    QPointF transformPoint(const pointf_s &point);
     QPointF transformPoint(const QPointF &point);
     QPointF transformPoint(qreal x, qreal y);
+
+    static QByteArray getHash(Agraph_t *graph);
+    static QByteArray getHash(Agedge_t *edge);
+    static QByteArray getHash(Agnode_t *node);
+    static QByteArray getHash(textlabel_t *label);
+
+    QGraphVizNode *getNode(int GVID);
+    bool containsNode(int GVID);
+    QGraphVizEdge *getEdge(int GVID);
+    bool containsEdge(int GVID);
 
 private:
     static GVC_t *m_Context;
