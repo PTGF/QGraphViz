@@ -40,30 +40,16 @@ class QGraphVizEdge : public QGraphicsItem
 {
 public:
     explicit QGraphVizEdge(edge_t *edge, QGraphViz *graphViz, QGraphicsItem *parent = 0);
-
     int getGVID();
-
     int type() const;
 
 protected:
-    void updateDimensions();
-    void preRender();
-
     virtual QRectF boundingRect() const;
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
 private:
     edge_t *m_GraphVizEdge;
     QGraphViz *m_GraphViz;
-
-    QList<QPainterPath> m_Paths;
-
-    QGraphicsPathItem *m_PathItem;
-
-    QGraphVizLabel *m_Label;
-    QGraphVizLabel *m_LabelHead;
-    QGraphVizLabel *m_LabelTail;
-
 };
 
 #endif // QGRAPHVIZEDGE_H

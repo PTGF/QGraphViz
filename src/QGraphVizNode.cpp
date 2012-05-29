@@ -26,13 +26,12 @@
  */
 
 #include "QGraphVizNode.h"
-#include "QGraphVizLabel.h"
 #include "QGraphViz.h"
 
-#include <QtDebug>
+#define STROKE_WIDTH 2
 
 QGraphVizNode::QGraphVizNode(node_t *node, QGraphViz *graphViz, QGraphicsItem * parent) :
-    QGraphicsItem(parent, graphViz),
+    QGraphicsItem(parent),
     m_GraphVizNode(node),
     m_GraphViz(graphViz)
 {
@@ -48,98 +47,28 @@ int QGraphVizNode::getGVID()
     return m_GraphVizNode->id;
 }
 
-qreal QGraphVizNode::width() const
+QString QGraphVizNode::getGVName()
 {
-    if(!m_RectItem) {
-        return 0.0;
-    }
-
-    return m_RectItem->rect().width();
-}
-
-void QGraphVizNode::setWidth(qreal width, bool update)
-{
-    if(!m_RectItem) {
-        return;
-    }
-
-    QRectF rect = m_RectItem->rect();
-
-    if(width == rect.width()) {
-        return;
-    }
-
-    rect.setWidth(width);
-    m_RectItem->setRect(rect);
-
-    if(update) {
-        updateDimensions();
-    }
-}
-
-qreal QGraphVizNode::height() const
-{
-    if(!m_RectItem) {
-        return 0.0;
-    }
-
-    return m_RectItem->rect().height();
-}
-
-void QGraphVizNode::setHeight(qreal height, bool update)
-{
-    if(!m_RectItem) {
-        return;
-    }
-
-    QRectF rect = m_RectItem->rect();
-
-    if(height == rect.height()) {
-        return;
-    }
-
-    rect.setHeight(height);
-    m_RectItem->setRect(rect);
-
-    if(update) {
-        updateDimensions();
-    }
-}
-
-void QGraphVizNode::updateDimensions()
-{
-    Agnodeinfo_t &nodeInfo = m_GraphVizNode->u;
-
-    // Size and location
-    setWidth(nodeInfo.width * 72, false);             // 72 pixels per inch
-    setHeight(nodeInfo.height * 72, false);
-
-    QPointF position = m_GraphViz->transformPoint(nodeInfo.coord.x, nodeInfo.coord.y);
-    position -= QPointF(width()/2, height()/2);
-    setPos(position);
-
-    //TODO: Node color from GraphViz
-//    m_RectItem->setBrush((Qt::GlobalColor)(m_GraphVizNode->id % 16 + 2));
-
-    m_LabelItem->setGraphVizLabel(m_GraphVizNode->u.label);
-
-    if(nodeInfo.xlabel) {
-        setToolTip(nodeInfo.xlabel->text);
-    } else {
-        setToolTip(QString());
-    }
+    return m_GraphVizNode->name;
 }
 
 QRectF QGraphVizNode::boundingRect() const
 {
+#if 0
+    QPointF position = m_GraphViz->transformPoint(m_GraphVizNode->u.coord);
+    QPointF lowerLeft = QPointF(m_GraphViz->transformPoint(m_GraphVizNode->u.bb.LL)) - position;
+    QPointF upperRight = QPointF(m_GraphViz->transformPoint(m_GraphVizNode->u.bb.UR)) - position;
+    return QRectF(lowerLeft.x(), upperRight.y(), upperRight.x(), lowerLeft.y());
+#else
+    //! \note For some reason, the bounding box is not defined when we need it; use height and width instead
     QPointF size(m_GraphVizNode->u.width * 72, m_GraphVizNode->u.height * 72);
-    return QRectF(-size/2, size/2);
+    return QRectF(-size/2, size/2);  // Center point of overall block
+#endif
 }
 
 void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    QPointF position = m_GraphViz->transformPoint(m_GraphVizNode->u.coord);
-    setPos(position);
+    setPos(m_GraphViz->transformPoint(m_GraphVizNode->u.coord));
 
     QPainterPath path;
 
@@ -163,9 +92,77 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 //        qWarning() << "No shape data";
 //    }
 
-    path.addRect(boundingRect());
+    // Just draw the bounding rectangle (minus the stroke width) for now
+    path.addRect(boundingRect().adjusted(STROKE_WIDTH/2, STROKE_WIDTH/2, -STROKE_WIDTH/2, -STROKE_WIDTH/2));
 
-    painter->setPen(Qt::blue);
-    painter->setBrush(Qt::red);
+#if 0
+    // Get the attributes together into a dictionary structure
+    QHash<QString,QString> attr = m_GraphViz->getAttributes(m_GraphVizNode);
+
+    // If there's a specified fill color, use it
+    if(!attr["fillcolor"]) {
+        painter->setBrush(QColor(attr["fillcolor"]));
+    }
+#else
+    /* Seriously, WTF?!  The friggin' color values are in the attr array, but don't come out of the agattr function
+       set.  We get to pull them manually.  GraphViz is a thing of wonder. */
+
+    QStringList attr;
+    for(int i = 0; i < sizeof(m_GraphVizNode->attr); ++i) {
+        attr.append(m_GraphVizNode->attr[i]);
+    }
+
+    if(attr.count() >= 6) {
+        painter->setBrush(QColor(attr[6]));
+    }
+#endif
+
+    // Set the stroke pen and width
+    QPen pen = QPen(Qt::black);
+    pen.setWidthF(STROKE_WIDTH);
+    pen.setJoinStyle(Qt::RoundJoin);
+    painter->setPen(pen);
+
+    // Paint the path
     painter->drawPath(path);
+
+
+    // Draw the labels
+    QList<textlabel_t*> labels;
+    if(m_GraphVizNode->u.label) labels.append(m_GraphVizNode->u.label);
+    if(m_GraphVizNode->u.xlabel) labels.append(m_GraphVizNode->u.xlabel);
+
+    foreach(textlabel_t *label, labels) {
+        // Set the font parameters
+        QFont font = painter->font();
+        font.setStyleHint(QFont::Serif);
+        font.setStyleStrategy((QFont::StyleStrategy)(QFont::PreferAntialias | QFont::PreferQuality));
+#if 0
+        font.setFamily(label->fontname);    // Usually "Times New Roman"
+#else
+        //! \note This was set manually in the STAT GUI, so I'm doing the same here
+        font.setFamily("sans-serif");
+#endif
+        font.setPointSizeF(label->fontsize * .75);
+
+        //HACK: Pre-render to get optimal font size to fit in bounding box without overflow/wrap
+        QPainterPath labelPath;
+        labelPath.addText(0, 0, font, label->text);
+        if((boundingRect().width()-20) < labelPath.boundingRect().width()) {
+            font.setPointSizeF(font.pointSizeF() * ((boundingRect().width()-20) / labelPath.boundingRect().width()));
+        }
+
+        // Get the text color
+        QColor color(label->fontcolor);
+
+        // Center the text and wrap if we screwed up at the pre-render
+        QTextOption options;
+        options.setAlignment(Qt::AlignCenter);
+        options.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+
+        // Draw it!
+        painter->setFont(font);
+        painter->setPen(color);
+        painter->drawText(boundingRect(), label->text, options);
+    }
 }

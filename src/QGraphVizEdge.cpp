@@ -26,13 +26,7 @@
  */
 
 #include "QGraphVizEdge.h"
-
-#include "QGraphVizLabel.h"
 #include "QGraphViz.h"
-
-#ifdef QT_DEBUG
-#include <QtDebug>
-#endif
 
 static const double Pi = 3.14159265358979323846264338327950288419717;
 static double TwoPi = 2.0 * Pi;
@@ -40,15 +34,10 @@ static double ThirdPi = Pi / 3;
 static const qreal ArrowSize = 10;
 
 QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphViz *graphViz, QGraphicsItem * parent) :
-    QGraphicsItem(parent, graphViz),
+    QGraphicsItem(parent),
     m_GraphVizEdge(edge),
-    m_GraphViz(graphViz),
-    m_PathItem(new QGraphicsPathItem(this)),
-    m_Label(new QGraphVizLabel(m_GraphViz, this)),
-    m_LabelHead(new QGraphVizLabel(m_GraphViz, this)),
-    m_LabelTail(new QGraphVizLabel(m_GraphViz, this))
+    m_GraphViz(graphViz)
 {
-    preRender();
 }
 
 int QGraphVizEdge::type() const
@@ -61,18 +50,57 @@ int QGraphVizEdge::getGVID()
     return m_GraphVizEdge->id;
 }
 
+QRectF QGraphVizEdge::boundingRect() const
+{
+    QPointF position = m_GraphViz->transformPoint(m_GraphVizEdge->u.spl->list[0].list[0]);
 
-void QGraphVizEdge::updateDimensions()
+#if 0
+    QPointF lowerLeft = QPointF(m_GraphViz->transformPoint(m_GraphVizEdge->u.spl->bb.LL)) - position;
+    QPointF upperRight = QPointF(m_GraphViz->transformPoint(m_GraphVizEdge->u.spl->bb.UR)) - position;
+    return QRectF(lowerLeft.x(), upperRight.y(), upperRight.x(), lowerLeft.y());
+#else
+    //! \note For some reason, the bounding box is not defined when we need it; find it manually instead
+
+    QList<QPointF> points;
+    for(int i = 0; i < m_GraphVizEdge->u.spl->size; ++i) {
+        points.append(m_GraphViz->transformPoint(m_GraphVizEdge->u.spl->list[i].ep) - position);
+        for(int j = 0; j < m_GraphVizEdge->u.spl->list[i].size; ++j) {
+            points.append(m_GraphViz->transformPoint(m_GraphVizEdge->u.spl->list[i].list[j]) - position);
+        }
+    }
+
+    QRectF rect;
+    foreach(QPointF point, points) {
+        qreal left = qMin(rect.left(), point.x());
+        rect.setLeft(left);
+        qreal right = qMax(rect.right(), point.x());
+        rect.setRight(right);
+        qreal top = qMin(rect.top(), point.y());
+        rect.setTop(top);
+        qreal bottom = qMax(rect.bottom(), point.y());
+        rect.setBottom(bottom);
+    }
+#endif
+
+    return rect;
+}
+
+void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Agedgeinfo_t &edgeInfo = m_GraphVizEdge->u;
 
     if(edgeInfo.spl) {
+        QPen pen(Qt::black);
+        pen.setWidthF(edgeInfo.weight * 1.5);
+        painter->setPen(pen);
+
         QPainterPath path;
         for(int i=0; i < edgeInfo.spl->size; ++i) {
             bezier bez = edgeInfo.spl->list[i];
 
-            /*! \note Hell if I know why they don't use 'sp' as the start point, and instead stick the damn thing in the
-                      first point of the bezier array (each bezier is 3 points) */
+            /*! \note Hell if I know why they don't use 'sp' as the start point, (you know, 'cause they named it that)
+                      and instead stick the damn thing in the first point of the bezier array (each bezier is 3 points,
+                      so bez.size always equals (1 + (3 * size)) for your mental checksum) */
 
             QPointF startPoint = m_GraphViz->transformPoint(bez.list[0]);
             QPointF endPoint = m_GraphViz->transformPoint(bez.ep) - startPoint;
@@ -86,7 +114,6 @@ void QGraphVizEdge::updateDimensions()
             }
 
             path.lineTo(endPoint);
-    //        path.closeSubpath();
 
             // Add an arrowhead
             QLineF line(endPoint, point3);
@@ -105,46 +132,44 @@ void QGraphVizEdge::updateDimensions()
                 path.lineTo(arrowP2 + endPoint);
             }
 
-            m_PathItem->setPos(startPoint);
+            setPos(startPoint);
         }
-        QPen pen(Qt::black);
-        pen.setWidthF(edgeInfo.weight * 1.5);
-        m_PathItem->setPen(pen);
-        m_PathItem->setPath(path);
+
+        painter->drawPath(path);
     }
 
-    // Update label objects
-    m_Label->setGraphVizLabel(edgeInfo.label);
-    m_LabelHead->setGraphVizLabel(edgeInfo.head_label);
-    m_LabelTail->setGraphVizLabel(edgeInfo.tail_label);
 
-    if(edgeInfo.xlabel) {
-        setToolTip(edgeInfo.xlabel->text);
-    } else {
-        setToolTip(QString());
+    QList<textlabel_t*> labels;
+    if(edgeInfo.label) labels.append(edgeInfo.label);
+    if(edgeInfo.head_label) labels.append(edgeInfo.head_label);
+    if(edgeInfo.tail_label) labels.append(edgeInfo.tail_label);
+    if(edgeInfo.xlabel) labels.append(edgeInfo.xlabel);
+
+    foreach(textlabel_t *label, labels) {
+        QPointF labelPosition = m_GraphViz->transformPoint(label->pos) - pos();
+
+        // Set the font parameters
+        QFont font = painter->font();
+        font.setStyleHint(QFont::Serif);
+        font.setStyleStrategy((QFont::StyleStrategy)(QFont::PreferAntialias | QFont::PreferQuality));
+#if 0
+        font.setFamily(label->fontname);    // Usually "Times New Roman"
+#else
+        //! \note This was set manually in the STAT GUI, so I'm doing the same here
+        font.setFamily("sans-serif");
+#endif
+        font.setPointSizeF(label->fontsize * .75);
+
+        //HACK: Prerender to get bounding box for centering on position
+        QPainterPath path;
+        path.addText(0, 0, font, label->text);
+        labelPosition -= path.boundingRect().bottomRight() / 2;
+
+        QColor color(label->fontcolor);
+
+        painter->setFont(font);
+        painter->setPen(color);
+        painter->drawText(labelPosition, label->text);
     }
-}
 
-void QGraphVizEdge::preRender()
-{
-    // See if the object has changed from the last pre-render
-    static QByteArray lastMD5 = QGraphViz::getHash(m_GraphVizEdge);
-    QByteArray currentMD5 = QGraphViz::getHash(m_GraphVizEdge);
-    if(lastMD5 == currentMD5) {
-        return;
-    }
-    lastMD5 = currentMD5;
-
-
-
-}
-
-QRectF QGraphVizEdge::boundingRect() const
-{
-    return QRectF();
-}
-
-
-void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
-{
 }

@@ -40,29 +40,17 @@ class QGraphVizNode : public QGraphicsItem
 {
 public:
     explicit QGraphVizNode(node_t *node, QGraphViz *graphViz, QGraphicsItem *parent = 0);
-
     int getGVID();
-
+    QString getGVName();
     int type() const;
 
-    // Node properties
-    qreal width() const;
-    void setWidth(qreal width, bool update = true);
-    qreal height() const;
-    void setHeight(qreal height, bool update = true);
-
 protected:
-    void updateDimensions();
-
     virtual QRectF boundingRect() const;
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
 private:
     node_t *m_GraphVizNode;
     QGraphViz *m_GraphViz;
-
-    QGraphicsRectItem *m_RectItem;
-    QGraphVizLabel *m_LabelItem;
 };
 
 #endif // QGRAPHVIZNODE_H

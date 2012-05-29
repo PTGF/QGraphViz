@@ -30,8 +30,6 @@
 
 #include "QGraphViz.h"
 
-#include <QtDebug>
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -54,10 +52,10 @@ MainWindow::MainWindow(QWidget *parent) :
         QByteArray content = gv->exportContent();
         ui->textEdit->setText(QString(content));
 
-//        content = gv->exportContent("png");
-//        QPixmap pixmap;
-//        pixmap.loadFromData(content);
-//        ui->label->setPixmap(pixmap.scaled(QSize(512,768), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        content = gv->exportContent("png");
+        QPixmap pixmap;
+        pixmap.loadFromData(content);
+        ui->label->setPixmap(pixmap.scaled(QSize(512,768), Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
 }
 

@@ -31,10 +31,6 @@
 #include <graphviz/gvc.h>
 #include <graphviz/graph.h>
 
-#ifdef QT_DEBUG
-  #include <QtDebug>
-#endif
-
 #include "QGraphVizNode.h"
 #include "QGraphVizEdge.h"
 
@@ -43,9 +39,6 @@ GVC_t *QGraphViz::m_Context = gvContext();
 QGraphViz::QGraphViz(QString content, QObject *parent) :
     QGraphicsScene(parent),
     m_Graph(NULL),
-    m_GraphAttributes(),
-    m_DefaultNodeAttributes(),
-    m_DefaultEdgeAttributes(),
     m_LayoutEngine("dot"),
     m_LayoutDone(false)
 {
@@ -55,19 +48,7 @@ QGraphViz::QGraphViz(QString content, QObject *parent) :
 
     m_Content = content;
     m_Graph = agmemread(m_Content.toLocal8Bit().data());
-
-    if(m_Graph) {
-        m_GraphAttributes.setGraph(m_Graph);
-        connect(&m_GraphAttributes, SIGNAL(changed()), this, SLOT(onChanged()));
-
-        m_DefaultNodeAttributes.setNode(agprotonode(m_Graph));
-        connect(&m_DefaultNodeAttributes, SIGNAL(changed()), this, SLOT(onChanged()));
-
-        m_DefaultEdgeAttributes.setEdge(agprotoedge(m_Graph));
-        connect(&m_DefaultEdgeAttributes, SIGNAL(changed()), this, SLOT(onChanged()));
-
-        doRender();
-    }
+    doRender();
 }
 
 QGraphViz::~QGraphViz()
@@ -81,21 +62,6 @@ QGraphViz::~QGraphViz()
         agclose(m_Graph);
         m_Graph = NULL;
     }
-}
-
-QGraphVizGraphAttributes &QGraphViz::graphAttributes()
-{
-    return m_GraphAttributes;
-}
-
-QGraphVizNodeAttributes &QGraphViz::defaultNodeAttributes()
-{
-    return m_DefaultNodeAttributes;
-}
-
-QGraphVizEdgeAttributes &QGraphViz::defaultEdgeAttributes()
-{
-    return m_DefaultEdgeAttributes;
 }
 
 void QGraphViz::doLayout()
@@ -258,25 +224,104 @@ bool QGraphViz::containsEdge(int GVID)
 }
 
 
+QHash<QString, QString> QGraphViz::getAttributes()
+{
+    QHash<QString,QString> attr;
+    Agsym_t *nextAttr = agfstattr(m_Graph);
+    while(nextAttr) {
+        QString key = QString(nextAttr->name);
+        QString value = QString(nextAttr->value);
+        if(!key.isEmpty() && !value.isEmpty()) {
+            attr[key] = value;
+        }
+        nextAttr = agnxtattr(m_Graph, nextAttr);
+    }
+    return attr;
+}
 
-QByteArray QGraphViz::getHash(Agraph_t *graph)
+QHash<QString, QString> QGraphViz::getAttributes(Agnode_t *node)
+{
+    QHash<QString,QString> attr;
+
+    Agnode_t *defaultNode = agprotonode(m_Graph);
+    Agsym_t *nextAttr = agfstattr(defaultNode);
+    while(nextAttr) {
+        QString key = QString(nextAttr->name);
+        QString value = QString(nextAttr->value);
+        if(!key.isEmpty() && !value.isEmpty()) {
+            attr[key] = value;
+        }
+        nextAttr = agnxtattr(defaultNode, nextAttr);
+    }
+
+    if(node) {
+        Agsym_t *nextAttr = agfstattr(node);
+        while(nextAttr) {
+            QString key = QString(nextAttr->name);
+            QString value = QString(nextAttr->value);
+            if(!key.isEmpty()) {
+                attr[key] = value;
+            }
+            nextAttr = agnxtattr(node, nextAttr);
+        }
+    }
+
+    return attr;
+}
+
+QHash<QString, QString> QGraphViz::getAttributes(Agedge_t *edge)
+{
+    QHash<QString,QString> attr;
+
+    Agedge_t *defaultEdge = agprotoedge(m_Graph);
+    Agsym_t *nextAttr = agfstattr(defaultEdge);
+    while(nextAttr) {
+        QString key = QString(nextAttr->name);
+        QString value = QString(nextAttr->value);
+        if(!key.isEmpty() && !value.isEmpty()) {
+            attr[key] = value;
+        }
+        nextAttr = agnxtattr(defaultEdge, nextAttr);
+    }
+
+    if(edge) {
+        Agsym_t *nextAttr = agfstattr(edge);
+        while(nextAttr) {
+            QString key = QString(nextAttr->name);
+            QString value = QString(nextAttr->value);
+            if(!key.isEmpty() && !value.isEmpty()) {
+                attr[key] = value;
+            }
+            nextAttr = agnxtattr(edge, nextAttr);
+        }
+    }
+
+    return attr;
+}
+
+
+
+
+QByteArray QGraphViz::getHash()
 {
     QCryptographicHash md5(QCryptographicHash::Md5);
-    md5.addData((char*)graph, sizeof(Agraph_t));
+    md5.addData((char*)m_Graph, sizeof(Agraph_t));
 
-    //TODO: Add attributes
-    //TODO: Add default node attributes
-    //TODO: Add default edge attributes
+    // Serialize and add attributes
+    QByteArray attributes;
+    QDataStream ds(&attributes, QIODevice::WriteOnly);
+    ds << getAttributes();
+    md5.addData(attributes);
 
-    node_t *node = agfstnode(graph);
+    node_t *node = agfstnode(m_Graph);
     while(node) {
         md5.addData(getHash(node));
-        Agedge_t *edge = agfstedge(graph, node);
+        Agedge_t *edge = agfstedge(m_Graph, node);
         while(edge) {
             md5.addData(getHash(edge));
-            edge = agnxtedge(graph, edge, node);
+            edge = agnxtedge(m_Graph, edge, node);
         }
-        node = agnxtnode(graph, node);
+        node = agnxtnode(m_Graph, node);
     }
 
     return md5.result();
@@ -287,7 +332,11 @@ QByteArray QGraphViz::getHash(Agedge_t *edge)
     QCryptographicHash md5(QCryptographicHash::Md5);
     md5.addData((char*)edge, sizeof(Agedge_t));
 
-    //TODO: Add attributes
+    // Serialize and add attributes
+    QByteArray attributes;
+    QDataStream ds(&attributes, QIODevice::WriteOnly);
+    ds << getAttributes(edge);
+    md5.addData(attributes);
 
     // Add splines
     if(edge->u.spl) {
@@ -317,7 +366,11 @@ QByteArray QGraphViz::getHash(Agnode_t *node)
     QCryptographicHash md5(QCryptographicHash::Md5);
     md5.addData((char*)node, sizeof(Agnode_t));
 
-    //TODO: Add attributes
+    // Serialize and add attributes
+    QByteArray attributes;
+    QDataStream ds(&attributes, QIODevice::WriteOnly);
+    ds << getAttributes(node);
+    md5.addData(attributes);
 
     if(node->u.shape) {
         md5.addData((char*)node->u.shape, sizeof(shape_desc));

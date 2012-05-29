@@ -33,8 +33,6 @@
 
 #include <graphviz/types.h>
 
-#include "QGraphVizAttributes.h"
-
 class QGraphVizNode;
 class QGraphVizEdge;
 
@@ -46,10 +44,6 @@ public:
     ~QGraphViz();
 
     QMap<QString, QString> arguments();
-
-    QGraphVizGraphAttributes &graphAttributes();
-    QGraphVizNodeAttributes &defaultNodeAttributes();
-    QGraphVizEdgeAttributes &defaultEdgeAttributes();
 
     QByteArray exportContent(QString renderEngine = QString("xdot"));
 
@@ -73,10 +67,14 @@ protected:
     QPointF transformPoint(const QPointF &point);
     QPointF transformPoint(qreal x, qreal y);
 
-    static QByteArray getHash(Agraph_t *graph);
-    static QByteArray getHash(Agedge_t *edge);
-    static QByteArray getHash(Agnode_t *node);
-    static QByteArray getHash(textlabel_t *label);
+    QHash<QString, QString> getAttributes();
+    QHash<QString, QString> getAttributes(Agnode_t *node);
+    QHash<QString, QString> getAttributes(Agedge_t *edge);
+
+    QByteArray getHash();
+    QByteArray getHash(Agedge_t *edge);
+    QByteArray getHash(Agnode_t *node);
+    QByteArray getHash(textlabel_t *label);
 
     QGraphVizNode *getNode(int GVID);
     bool containsNode(int GVID);
@@ -88,10 +86,6 @@ private:
 
     QString m_Content;
     graph_t *m_Graph;
-
-    QGraphVizGraphAttributes m_GraphAttributes;
-    QGraphVizNodeAttributes m_DefaultNodeAttributes;
-    QGraphVizEdgeAttributes m_DefaultEdgeAttributes;
 
     QPointF m_Translate;
     QPointF m_Scale;

@@ -13,17 +13,13 @@ TEMPLATE = app
 SOURCES += main.cpp\
         MainWindow.cpp \
     QGraphViz.cpp \
-    QGraphVizAttributes.cpp \
     QGraphVizNode.cpp \
-    QGraphVizEdge.cpp \
-    QGraphVizLabel.cpp
+    QGraphVizEdge.cpp
 
 HEADERS  += MainWindow.h \
     QGraphViz.h \
-    QGraphVizAttributes.h \
     QGraphVizNode.h \
-    QGraphVizEdge.h \
-    QGraphVizLabel.h
+    QGraphVizEdge.h
 
 FORMS    += MainWindow.ui
 
