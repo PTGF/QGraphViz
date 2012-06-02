@@ -25,32 +25,42 @@
 
  */
 
-#ifndef QGRAPHVIZEDGE_H
-#define QGRAPHVIZEDGE_H
+#ifndef QGRAPHVIZVIEW_H
+#define QGRAPHVIZVIEW_H
 
 #include <QtCore>
 #include <QtGui>
 
-#include <graphviz/types.h>
+#define SCALE_MIN 0.01
+#define SCALE_MAX 50.0
 
-class QGraphVizLabel;
-class QGraphViz;
+class QGraphVizPIP;
 
-class QGraphVizEdge : public QGraphicsItem
+class QGraphVizView : public QGraphicsView
 {
+    Q_OBJECT
 public:
-    explicit QGraphVizEdge(edge_t *edge, QGraphViz *graphViz, QGraphicsItem *parent = 0);
-    int getGVID();
-    int type() const;
+    explicit QGraphVizView(QWidget *parent = 0);
+    explicit QGraphVizView(QGraphicsScene * scene, QWidget * parent = 0);
+
+signals:
+
+public slots:
+    void zoomIn();
+    void zoomOut();
 
 protected:
-    virtual QRectF boundingRect() const;
-    virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    void init();
+
+    void zoom(qreal delta);
+    void setZoom(qreal zoom);
+    virtual void wheelEvent(QWheelEvent *event);
+
+    virtual bool viewportEvent(QEvent * event);
 
 private:
-    edge_t *m_GraphVizEdge;
-    QGraphViz *m_GraphViz;
-    QRectF m_BoundingRect;
+    qreal m_Scale;
+    QGraphVizPIP *m_PictureInPicture;
 };
 
-#endif // QGRAPHVIZEDGE_H
+#endif // QGRAPHVIZVIEW_H

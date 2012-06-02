@@ -31,6 +31,8 @@
 #include <graphviz/gvc.h>
 #include <graphviz/graph.h>
 
+#include <typeinfo>
+
 #include "QGraphVizNode.h"
 #include "QGraphVizEdge.h"
 
@@ -48,6 +50,7 @@ QGraphViz::QGraphViz(QString content, QObject *parent) :
 
     m_Content = content;
     m_Graph = agmemread(m_Content.toLocal8Bit().data());
+
     doRender();
 }
 
@@ -103,6 +106,15 @@ void QGraphViz::doRender()
 
         node = agnxtnode(graph(), node);
     }
+
+    // Calculate the visible area
+    QRectF rect = sceneRect();
+    rect.setTopLeft(QPointF(0,0));
+    setSceneRect(rect);
+
+    QList<QRectF> rects;
+    rects << rect;
+    emit QGraphicsScene::changed(rects);
 }
 
 void QGraphViz::onChanged()

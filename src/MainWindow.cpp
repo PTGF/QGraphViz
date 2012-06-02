@@ -28,6 +28,7 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
+#include "QGraphVizView.h"
 #include "QGraphViz.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -45,8 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
         QGraphViz *gv = new QGraphViz(QString(data), this);
 
-        QGraphicsView *view = new QGraphicsView(gv);
-        view->setRenderHint(QPainter::Antialiasing);       // Looks like crap without antialiasing
+        QGraphVizView *view = new QGraphVizView(gv);
         ui->tabWidget->setCurrentIndex(ui->tabWidget->addTab(view, "View"));
 
         QByteArray content = gv->exportContent();

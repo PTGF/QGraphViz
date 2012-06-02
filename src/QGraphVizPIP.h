@@ -25,32 +25,36 @@
 
  */
 
-#ifndef QGRAPHVIZEDGE_H
-#define QGRAPHVIZEDGE_H
+#ifndef QGRAPHVIZPIP_H
+#define QGRAPHVIZPIP_H
 
-#include <QtCore>
-#include <QtGui>
+#include <QGraphicsView>
 
-#include <graphviz/types.h>
+class QGraphVizView;
 
-class QGraphVizLabel;
-class QGraphViz;
-
-class QGraphVizEdge : public QGraphicsItem
+class QGraphVizPIP : public QGraphicsView
 {
+    Q_OBJECT
 public:
-    explicit QGraphVizEdge(edge_t *edge, QGraphViz *graphViz, QGraphicsItem *parent = 0);
-    int getGVID();
-    int type() const;
+    explicit QGraphVizPIP(QGraphicsScene * scene = 0, QGraphVizView * parent = 0);
+
+    void setViewPortRect(QRectF rect);
+    void setViewPortRect(qreal x, qreal y, qreal width, qreal height);
+
+    void render(QPainter *painter, const QRectF &target, const QRect &source, Qt::AspectRatioMode aspectRatioMode);
+
+    void updateViewPortRect();
+
+signals:
+
+public slots:
 
 protected:
-    virtual QRectF boundingRect() const;
-    virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    virtual void drawForeground(QPainter *painter, const QRectF &rect);
+    virtual void drawBackground(QPainter *painter, const QRectF &rect);
 
 private:
-    edge_t *m_GraphVizEdge;
-    QGraphViz *m_GraphViz;
-    QRectF m_BoundingRect;
+    QRectF m_ViewPortRect;
 };
 
-#endif // QGRAPHVIZEDGE_H
+#endif // QGRAPHVIZPIP_H

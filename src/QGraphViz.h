@@ -50,16 +50,15 @@ public:
     QString layoutEngine();
     void setLayoutEngine(QString layoutEngine);
 
-
 signals:
     void changed();
 
 public slots:
+    void doRender();
 
 protected slots:
     void onChanged();
     void doLayout();
-    void doRender();
 
 protected:
     graph_t *graph() { return m_Graph; }
@@ -92,6 +91,8 @@ private:
 
     QString m_LayoutEngine;
     bool m_LayoutDone;
+
+    QGraphicsRectItem *rect;
 
     friend class QGraphVizNode;
     friend class QGraphVizEdge;
