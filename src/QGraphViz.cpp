@@ -83,6 +83,7 @@ void QGraphViz::doLayout()
     m_LayoutDone = true;
 }
 
+
 void QGraphViz::doRender()
 {
     doLayout();
@@ -193,18 +194,26 @@ QPointF QGraphViz::transformPoint(qreal x, qreal y)
     return QPointF((x + m_Translate.x()) * m_Scale.x(), (y + m_Translate.y()) * m_Scale.y());
 }
 
+QList<QGraphVizNode*> QGraphViz::getNodes()
+{
+    QList<QGraphVizNode*> nodes;
 
+    foreach(QGraphicsItem *item, items()) {
+        if(item->type() == QGraphicsItem::UserType + 1) {
+            if(QGraphVizNode *node = dynamic_cast<QGraphVizNode*>(item)) {
+                nodes.append(node);
+            }
+        }
+    }
+
+    return nodes;
+}
 
 QGraphVizNode *QGraphViz::getNode(int GVID)
 {
-    foreach(QGraphicsItem *item, items()) {
-        if(item->type() == QGraphicsItem::UserType + 1) {  // Little more optimized
-            QGraphVizNode *node = dynamic_cast<QGraphVizNode*>(item);
-            if(node) {
-                if(node->getGVID() == GVID) {
-                    return node;
-                }
-            }
+    foreach(QGraphVizNode *node, getNodes()) {
+        if(node->getGVID() == GVID) {
+            return node;
         }
     }
     return NULL;
@@ -215,16 +224,27 @@ bool QGraphViz::containsNode(int GVID)
     return (getNode(GVID) != NULL);
 }
 
+QList<QGraphVizEdge*> QGraphViz::getEdges()
+{
+    QList<QGraphVizEdge*> edges;
+
+    foreach(QGraphicsItem *item, items()) {
+        if(item->type() == QGraphicsItem::UserType + 2) {
+            if(QGraphVizEdge *edge = dynamic_cast<QGraphVizEdge*>(item)) {
+                edges.append(edge);
+            }
+        }
+    }
+
+    return edges;
+}
+
+
 QGraphVizEdge *QGraphViz::getEdge(int GVID)
 {
-    foreach(QGraphicsItem *item, items()) {
-        if(item->type() == QGraphicsItem::UserType + 2) {  // Little more optimized
-            QGraphVizEdge *edge = dynamic_cast<QGraphVizEdge*>(item);
-            if(edge) {
-                if(edge->getGVID() == GVID) {
-                    return edge;
-                }
-            }
+    foreach(QGraphVizEdge *edge, getEdges()) {
+        if(edge->getGVID() == GVID) {
+            return edge;
         }
     }
     return NULL;

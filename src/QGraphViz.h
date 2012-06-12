@@ -75,8 +75,11 @@ protected:
     QByteArray getHash(Agnode_t *node);
     QByteArray getHash(textlabel_t *label);
 
+    QList<QGraphVizNode*> getNodes();
     QGraphVizNode *getNode(int GVID);
     bool containsNode(int GVID);
+
+    QList<QGraphVizEdge*> getEdges();
     QGraphVizEdge *getEdge(int GVID);
     bool containsEdge(int GVID);
 

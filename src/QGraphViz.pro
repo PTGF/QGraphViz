@@ -16,14 +16,16 @@ SOURCES += main.cpp\
     QGraphVizNode.cpp \
     QGraphVizEdge.cpp \
     QGraphVizView.cpp \
-    QGraphVizPIP.cpp
+    QGraphVizPIP.cpp \
+    QGraphVizZoomWidget.cpp
 
 HEADERS  += MainWindow.h \
     QGraphViz.h \
     QGraphVizNode.h \
     QGraphVizEdge.h \
     QGraphVizView.h \
-    QGraphVizPIP.h
+    QGraphVizPIP.h \
+    QGraphVizZoomWidget.h
 
 FORMS    += MainWindow.ui
 

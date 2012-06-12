@@ -36,7 +36,9 @@ static const qreal ArrowSize = 10;
 QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphViz *graphViz, QGraphicsItem * parent) :
     QGraphicsItem(parent),
     m_GraphVizEdge(edge),
-    m_GraphViz(graphViz)
+    m_GraphViz(graphViz),
+    m_Head(NULL),
+    m_Tail(NULL)
 {
 }
 
@@ -183,4 +185,22 @@ void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
             painter->drawText(labelPosition, label->text);
         }
     }
+}
+
+QGraphVizNode *QGraphVizEdge::head()
+{
+    if(!m_Head) {
+        m_Head = m_GraphViz->getNode(m_GraphVizEdge->head->id);
+    }
+
+    return m_Head;
+}
+
+QGraphVizNode *QGraphVizEdge::tail()
+{
+    if(!m_Tail) {
+        m_Tail = m_GraphViz->getNode(m_GraphVizEdge->tail->id);
+    }
+
+    return m_Tail;
 }

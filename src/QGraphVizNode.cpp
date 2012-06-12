@@ -27,13 +27,15 @@
 
 #include "QGraphVizNode.h"
 #include "QGraphViz.h"
+#include "QGraphVizEdge.h"
 
 #define STROKE_WIDTH 2
 
 QGraphVizNode::QGraphVizNode(node_t *node, QGraphViz *graphViz, QGraphicsItem * parent) :
     QGraphicsItem(parent),
     m_GraphVizNode(node),
-    m_GraphViz(graphViz)
+    m_GraphViz(graphViz),
+    m_Collapsed(false)
 {
     setPos(m_GraphViz->transformPoint(m_GraphVizNode->u.coord));
 }
@@ -52,6 +54,22 @@ QString QGraphVizNode::getGVName()
 {
     return m_GraphVizNode->name;
 }
+
+bool QGraphVizNode::collapsed()
+{
+    return m_Collapsed;
+}
+
+void QGraphVizNode::setCollapsed(bool collapse)
+{
+    m_Collapsed = collapse;
+}
+
+void QGraphVizNode::toggleCollapse()
+{
+    setCollapsed(!collapsed());
+}
+
 
 QRectF QGraphVizNode::boundingRect() const
 {
@@ -73,8 +91,28 @@ QRectF QGraphVizNode::boundingRect() const
 
 void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
+    Q_UNUSED(widget)
+
+    QList<QGraphVizEdge*> edges = m_GraphViz->getEdges();
+    foreach(QGraphVizEdge *edge, edges) {
+        if(edge->tail() == this) {
+            if(!edge->head()->isVisible() || edge->head()->collapsed()) {
+                setVisible(false);
+            } else {
+                setVisible(true);
+            }
+        }
+    }
+
+    if(!isVisible()) {
+        return;
+    }
+
+    if(collapsed()) {
+        //TODO: Draw differently to indicate collapsed node
+    }
+
     const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
-    qDebug() << lod;
 
     QPointF newPos = m_GraphViz->transformPoint(m_GraphVizNode->u.coord);
     if(newPos != pos()) {
@@ -122,7 +160,7 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
            set.  We get to pull them manually.  GraphViz is a thing of wonder. */
 
         QStringList attr;
-        for(int i = 0; i < sizeof(m_GraphVizNode->attr); ++i) {
+        for(uint i = 0; i < sizeof(m_GraphVizNode->attr); ++i) {
             attr.append(m_GraphVizNode->attr[i]);
         }
 

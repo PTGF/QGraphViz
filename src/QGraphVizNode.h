@@ -44,6 +44,10 @@ public:
     QString getGVName();
     int type() const;
 
+    bool collapsed();
+    void setCollapsed(bool collapse = true);
+    void toggleCollapse();
+
 protected:
     virtual QRectF boundingRect() const;
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
@@ -51,6 +55,7 @@ protected:
 private:
     node_t *m_GraphVizNode;
     QGraphViz *m_GraphViz;
+    bool m_Collapsed;
 };
 
 #endif // QGRAPHVIZNODE_H

@@ -33,6 +33,8 @@ QGraphVizPIP::QGraphVizPIP(QGraphicsScene * scene, QGraphVizView * parent) :
 {
     setRenderHint(QPainter::Antialiasing);
     setFrameStyle(Plain);
+
+    updateViewPortRect();
 }
 
 void QGraphVizPIP::setViewPortRect(qreal x, qreal y, qreal width, qreal height)
@@ -54,10 +56,10 @@ void QGraphVizPIP::drawBackground(QPainter *painter, const QRectF &rect)
 
     QPen borderPen;
     borderPen.setColor(Qt::black);
-    borderPen.setWidthF(2);
+    borderPen.setWidthF(5);
     painter->setPen(borderPen);
 
-    painter->drawRect(scene()->sceneRect().adjusted(-20,-20,20,20));
+    painter->drawRect(QRectF(mapToScene(0,0), mapToScene(width(),height())));
 }
 
 
@@ -84,7 +86,7 @@ void QGraphVizPIP::drawForeground(QPainter *painter, const QRectF &rect)
     brush.setStyle(Qt::SolidPattern);
     painter->setBrush(brush);
 
-    QRectF sceneRect = this->sceneRect().adjusted(-10,-10,10,10);
+    QRectF sceneRect = this->sceneRect().adjusted(-10,-10,20,20);
 
     QRectF viewPortRect;
     viewPortRect.setLeft(qMax(sceneRect.left(), m_ViewPortRect.left()));
@@ -97,6 +99,27 @@ void QGraphVizPIP::drawForeground(QPainter *painter, const QRectF &rect)
 
 void QGraphVizPIP::updateViewPortRect()
 {
+    QSize size;
+    qreal aspectRatio = sceneRect().width() / sceneRect().height();
+    if(aspectRatio > 1.0) {
+        size.setWidth(maximumWidth());
+        size.setHeight(maximumWidth() / aspectRatio);
+        if(size.height() > maximumHeight()) {
+            size.setWidth(maximumHeight() * aspectRatio);
+            size.setHeight(maximumHeight());
+        }
+    } else {
+        size.setWidth(maximumHeight() * aspectRatio);
+        size.setHeight(maximumHeight());
+        if(size.width() > maximumWidth()) {
+            size.setWidth(maximumWidth());
+            size.setHeight(maximumWidth() / aspectRatio);
+        }
+    }
+    if(this->size() != size) {
+        resize(size);
+    }
+
     centerOn(scene()->sceneRect().center());
     fitInView(sceneRect().adjusted(-20,-20,20,20), Qt::KeepAspectRatio);
     resetCachedContent();

@@ -25,41 +25,10 @@
 
  */
 
-#ifndef QGRAPHVIZEDGE_H
-#define QGRAPHVIZEDGE_H
+#include "QGraphVizZoomWidget.h"
 
-#include <QtCore>
-#include <QtGui>
-
-#include <graphviz/types.h>
-
-class QGraphVizNode;
-class QGraphVizLabel;
-class QGraphViz;
-
-class QGraphVizEdge : public QGraphicsItem
+QGraphVizZoomWidget::QGraphVizZoomWidget(QWidget *parent) :
+    QWidget(parent)
 {
-public:
-    explicit QGraphVizEdge(edge_t *edge, QGraphViz *graphViz, QGraphicsItem *parent = 0);
-    int getGVID();
-    int type() const;
-
-    QGraphVizNode *head();
-    QGraphVizNode *tail();
-
-protected:
-    virtual QRectF boundingRect() const;
-    virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
-
-private:
-    edge_t *m_GraphVizEdge;
-    QGraphViz *m_GraphViz;
-    QRectF m_BoundingRect;
-
-    QGraphVizNode *m_Head;
-    QGraphVizNode *m_Tail;
-
-    friend class QGraphViz;
-};
-
-#endif // QGRAPHVIZEDGE_H
+    resize(10, 150);
+}

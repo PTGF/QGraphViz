@@ -29,11 +29,14 @@
 
 #include "QGraphViz.h"
 #include "QGraphVizPIP.h"
+#include "QGraphVizNode.h"
+#include "QGraphVizZoomWidget.h"
 
 QGraphVizView::QGraphVizView(QWidget *parent) :
     QGraphicsView(parent),
     m_Scale(1.0),
-    m_PictureInPicture(NULL)
+    m_PictureInPicture(NULL),
+    m_ZoomWidget(NULL)
 {
     init();
 }
@@ -41,27 +44,38 @@ QGraphVizView::QGraphVizView(QWidget *parent) :
 QGraphVizView::QGraphVizView(QGraphicsScene * scene, QWidget * parent) :
     QGraphicsView(scene, parent),
     m_Scale(1.0),
-    m_PictureInPicture(NULL)
+    m_PictureInPicture(NULL),
+    m_ZoomWidget(NULL)
 {
     init();
 }
 
 void QGraphVizView::init()
 {
-    setDragMode(QGraphicsView::ScrollHandDrag);
     setCacheMode(QGraphicsView::CacheBackground);
     setRenderHint(QPainter::Antialiasing);
     setOptimizationFlags(QGraphicsView::DontSavePainterState);
     setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
+    setMouseTracking(true);
 
     m_PictureInPicture = new QGraphVizPIP(scene(), this);
-    m_PictureInPicture->resize(150, 150);
+    m_PictureInPicture->setMaximumSize(width()/4, height()/4);
     m_PictureInPicture->move(2, 2);
 
-    centerOn(scene()->sceneRect().center());
-    fitInView(scene()->sceneRect(), Qt::KeepAspectRatio);
+    QMatrix matrix;
+    matrix.scale(m_Scale, m_Scale);
+    setMatrix(matrix);
+
+    setSceneRect(scene()->sceneRect().adjusted(-10, -10, 10, 10));
+
+    m_ZoomWidget = new QGraphVizZoomWidget(this);
+    m_ZoomWidget->move(2, m_PictureInPicture->rect().bottom() + 2);
 }
 
+void QGraphVizView::drawForeground(QPainter *painter, const QRectF &rect)
+{
+    //TODO: Draw zoom scroller
+}
 
 void QGraphVizView::setZoom(qreal zoom)
 {
@@ -88,17 +102,64 @@ void QGraphVizView::setZoom(qreal zoom)
     m_PictureInPicture->setViewPortRect(viewPortRect);
 }
 
-bool QGraphVizView::viewportEvent(QEvent *event)
+void QGraphVizView::mousePressEvent(QMouseEvent *event)
 {
-    if(event->type() == QEvent::MouseMove || event->type() == QEvent::Wheel) {
-        QRectF viewPortRect = QRectF(mapToScene(0,0), mapToScene(viewport()->width(), viewport()->height()));
-        viewPortRect.moveTo(mapToScene(viewport()->x(), viewport()->y()));
-        m_PictureInPicture->setViewPortRect(viewPortRect);
+    if(event->buttons() == Qt::MidButton) {
+        m_MidPress = event->pos();
     }
 
-    return QGraphicsView::viewportEvent(event);
+    QGraphicsView::mousePressEvent(event);
 }
 
+void QGraphVizView::mouseReleaseEvent(QMouseEvent *event)
+{
+    // The event::buttons() is always 0; so the mouseMoveEvent simply processes as a no button situation
+    mouseMoveEvent(event);
+
+    QGraphicsView::mouseReleaseEvent(event);
+}
+
+void QGraphVizView::mouseMoveEvent(QMouseEvent *event)
+{
+    if(event->buttons() == Qt::NoButton) {
+        QGraphicsItem *item = itemAt(event->pos());
+        if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
+            viewport()->setCursor(Qt::PointingHandCursor);
+        } else {
+            viewport()->setCursor(Qt::ArrowCursor);
+        }
+
+    } else if(event->buttons() == Qt::MidButton) {
+        viewport()->setCursor(Qt::ClosedHandCursor);
+
+        QPointF delta = m_MidPress - event->pos();
+        horizontalScrollBar()->setValue(horizontalScrollBar()->value() + delta.x());
+        verticalScrollBar()->setValue(verticalScrollBar()->value() + delta.y());
+        m_MidPress =event->pos();
+    }
+
+    QGraphicsView::mouseMoveEvent(event);
+}
+
+void QGraphVizView::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    QGraphicsItem *item = itemAt(event->pos());
+    if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
+        QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
+        if(node) {
+            node->toggleCollapse();
+        }
+    }
+}
+
+void QGraphVizView::scrollContentsBy(int dx, int dy)
+{
+    QGraphicsView::scrollContentsBy(dx, dy);
+
+    QRectF viewPortRect = QRectF(mapToScene(0,0), mapToScene(viewport()->width(), viewport()->height()));
+    viewPortRect.moveTo(mapToScene(viewport()->x(), viewport()->y()));
+    m_PictureInPicture->setViewPortRect(viewPortRect);
+}
 
 void QGraphVizView::wheelEvent(QWheelEvent *event)
 {
