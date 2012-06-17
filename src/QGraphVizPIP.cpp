@@ -31,7 +31,7 @@
 QGraphVizPIP::QGraphVizPIP(QGraphicsScene * scene, QGraphVizView * parent) :
     QGraphicsView(scene, parent),
     m_GraphVizView(parent),
-    m_MoveViewPort(false)
+    m_StartedInViewport(false)
 {
     setCacheMode(QGraphicsView::CacheBackground);
 
@@ -137,11 +137,16 @@ void QGraphVizPIP::updateViewPortRect()
     resetCachedContent();
 }
 
+void QGraphVizPIP::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    m_GraphVizView->centerOn(mapToScene(event->pos()));
+}
+
 void QGraphVizPIP::mousePressEvent(QMouseEvent *event)
 {
     if(event->buttons() == Qt::LeftButton || event->buttons() == Qt::MidButton) {
-        if(m_ViewPortRect.contains(mapToScene(event->pos()))) {
-            m_MoveViewPort = true;
+        if(!m_ViewPortRect.contains(scene()->sceneRect()) && m_ViewPortRect.contains(mapToScene(event->pos()))) {
+            m_StartedInViewport = true;
         }
     }
 
@@ -150,7 +155,7 @@ void QGraphVizPIP::mousePressEvent(QMouseEvent *event)
 
 void QGraphVizPIP::mouseReleaseEvent(QMouseEvent *event)
 {
-    m_MoveViewPort = false;
+    m_StartedInViewport = false;
 
     QGraphicsView::mouseReleaseEvent(event);
 }
@@ -158,14 +163,14 @@ void QGraphVizPIP::mouseReleaseEvent(QMouseEvent *event)
 void QGraphVizPIP::mouseMoveEvent(QMouseEvent *event)
 {
     if(event->buttons() == Qt::NoButton) {
-        if(m_ViewPortRect.contains(mapToScene(event->pos()))) {
-            viewport()->setCursor(Qt::PointingHandCursor);
+        if(!m_ViewPortRect.contains(scene()->sceneRect()) && m_ViewPortRect.contains(mapToScene(event->pos()))) {
+            viewport()->setCursor(Qt::OpenHandCursor);
         } else {
             viewport()->setCursor(Qt::ArrowCursor);
         }
 
     } else if(event->buttons() == Qt::LeftButton || event->buttons() == Qt::MidButton) {
-        if(m_MoveViewPort) {
+        if(m_StartedInViewport) {
             viewport()->setCursor(Qt::ClosedHandCursor);
             m_GraphVizView->centerOn(mapToScene(event->pos()));
         }
