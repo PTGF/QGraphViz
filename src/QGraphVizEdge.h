@@ -35,12 +35,12 @@
 
 class QGraphVizNode;
 class QGraphVizLabel;
-class QGraphViz;
+class QGraphVizScene;
 
 class QGraphVizEdge : public QGraphicsItem
 {
 public:
-    explicit QGraphVizEdge(edge_t *edge, QGraphViz *graphViz, QGraphicsItem *parent = 0);
+    explicit QGraphVizEdge(edge_t *edge, QGraphVizScene *graphViz, QGraphicsItem *parent = 0);
     int getGVID();
     int type() const;
 
@@ -51,15 +51,35 @@ protected:
     virtual QRectF boundingRect() const;
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
+
+    void updateGeometry();
+    void updatePath();
+    void updateLabel();
+
 private:
     edge_t *m_GraphVizEdge;
-    QGraphViz *m_GraphViz;
+    QGraphVizScene *m_GraphViz;
+
+    QByteArray m_LastHash;
+
     QRectF m_BoundingRect;
+
+    QPen m_PathPen;
+    QBrush m_PathBrush;
+    QPainterPath m_Path;
+    QPainterPath m_PathArrow;
+
+    QPointF m_LabelPosition;
+    QFont m_LabelFont;
+    QColor m_LabelColor;
+    QString m_LabelText;
+
 
     QGraphVizNode *m_Head;
     QGraphVizNode *m_Tail;
 
-    friend class QGraphViz;
+    friend class QGraphVizScene;
+    friend class QGraphVizNode;
 };
 
 #endif // QGRAPHVIZEDGE_H

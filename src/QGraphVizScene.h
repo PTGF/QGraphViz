@@ -36,12 +36,12 @@
 class QGraphVizNode;
 class QGraphVizEdge;
 
-class QGraphViz : public QGraphicsScene
+class QGraphVizScene : public QGraphicsScene
 {
     Q_OBJECT
 public:
-    explicit QGraphViz(QString content, QObject *parent = 0);
-    ~QGraphViz();
+    explicit QGraphVizScene(QString content, QObject *parent = 0);
+    ~QGraphVizScene();
 
     QMap<QString, QString> arguments();
 
@@ -96,6 +96,9 @@ private:
     bool m_LayoutDone;
 
     QGraphicsRectItem *rect;
+
+    QHash<int, QGraphVizNode*> m_Nodes;
+    QHash<int, QGraphVizEdge*> m_Edges;
 
     friend class QGraphVizNode;
     friend class QGraphVizEdge;

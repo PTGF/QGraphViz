@@ -34,12 +34,12 @@
 #include <graphviz/types.h>
 
 class QGraphVizLabel;
-class QGraphViz;
+class QGraphVizScene;
 
 class QGraphVizNode : public QGraphicsItem
 {
 public:
-    explicit QGraphVizNode(node_t *node, QGraphViz *graphViz, QGraphicsItem *parent = 0);
+    explicit QGraphVizNode(node_t *node, QGraphVizScene *graphViz, QGraphicsItem *parent = 0);
     int getGVID();
     QString getGVName();
     int type() const;
@@ -47,15 +47,34 @@ public:
     bool collapsed();
     void setCollapsed(bool collapse = true);
     void toggleCollapse();
+    void setVisible(bool visible);
 
 protected:
     virtual QRectF boundingRect() const;
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
+    void updateGeometry();
+    void updatePath();
+    void updateLabel();
+
 private:
     node_t *m_GraphVizNode;
-    QGraphViz *m_GraphViz;
+    QGraphVizScene *m_GraphViz;
     bool m_Collapsed;
+
+    QByteArray m_LastHash;
+
+    QRectF m_BoundingRect;
+
+    QBrush m_PathBrush;
+    QPen m_PathPen;
+    QPainterPath m_Path;
+
+    QTextOption m_LabelOptions;
+    QFont m_LabelFont;
+    QColor m_LabelColor;
+    QString m_LabelText;
+
 };
 
 #endif // QGRAPHVIZNODE_H

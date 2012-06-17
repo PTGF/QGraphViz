@@ -27,7 +27,7 @@
 
 #include "QGraphVizView.h"
 
-#include "QGraphViz.h"
+#include "QGraphVizScene.h"
 #include "QGraphVizPIP.h"
 #include "QGraphVizNode.h"
 #include "QGraphVizZoomWidget.h"
@@ -57,9 +57,11 @@ void QGraphVizView::init()
     setOptimizationFlags(QGraphicsView::DontSavePainterState);
     setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
     setMouseTracking(true);
+    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+
 
     m_PictureInPicture = new QGraphVizPIP(scene(), this);
-    m_PictureInPicture->setMaximumSize(width()/4, height()/4);
+    m_PictureInPicture->setMaximumSize(width(), height()/2);
     m_PictureInPicture->move(2, 2);
 
     QMatrix matrix;
@@ -74,6 +76,9 @@ void QGraphVizView::init()
 
 void QGraphVizView::drawForeground(QPainter *painter, const QRectF &rect)
 {
+    Q_UNUSED(painter)
+    Q_UNUSED(rect)
+
     //TODO: Draw zoom scroller
 }
 
@@ -135,7 +140,7 @@ void QGraphVizView::mouseMoveEvent(QMouseEvent *event)
         QPointF delta = m_MidPress - event->pos();
         horizontalScrollBar()->setValue(horizontalScrollBar()->value() + delta.x());
         verticalScrollBar()->setValue(verticalScrollBar()->value() + delta.y());
-        m_MidPress =event->pos();
+        m_MidPress = event->pos();
     }
 
     QGraphicsView::mouseMoveEvent(event);

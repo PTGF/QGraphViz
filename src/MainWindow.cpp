@@ -29,7 +29,7 @@
 #include "ui_MainWindow.h"
 
 #include "QGraphVizView.h"
-#include "QGraphViz.h"
+#include "QGraphVizScene.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -37,25 +37,33 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QFile file("../mpi_ringtopo.0001.3D.dot");
+//    QFile file("../mpi_ringtopo.0001.3D.dot");
 //    QFile file("../crazy.gv");
+    QFile file("../Trun-472procs.32228.2D.dot");
+//    QFile file("../cam.6.3D.dot");
+//    QFile file("../cray_216000.dot");  // This requires pre-processing (GraphViz fails; too wide)
+
+    if(!file.exists()) {
+        qCritical() << "dot file not found: " << file.fileName();
+    }
+
     if(file.exists()) {
         file.open(QIODevice::ReadOnly);
         QByteArray data = file.readAll();
         file.close();
 
-        QGraphViz *gv = new QGraphViz(QString(data), this);
+        QGraphVizScene *gv = new QGraphVizScene(QString(data), this);
 
         QGraphVizView *view = new QGraphVizView(gv);
         ui->tabWidget->setCurrentIndex(ui->tabWidget->addTab(view, "View"));
 
-        QByteArray content = gv->exportContent();
-        ui->textEdit->setText(QString(content));
+//        QByteArray content = gv->exportContent();
+//        ui->textEdit->setText(QString(content));
 
-        content = gv->exportContent("png");
-        QPixmap pixmap;
-        pixmap.loadFromData(content);
-        ui->label->setPixmap(pixmap.scaled(QSize(512,768), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+//        content = gv->exportContent("png");
+//        QPixmap pixmap;
+//        pixmap.loadFromData(content);
+//        ui->label->setPixmap(pixmap.scaled(QSize(512,768), Qt::KeepAspectRatio, Qt::SmoothTransformation));
     }
 }
 

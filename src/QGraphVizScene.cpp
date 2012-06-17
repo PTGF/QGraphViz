@@ -25,7 +25,8 @@
 
  */
 
-#include "QGraphViz.h"
+
+#include "QGraphVizScene.h"
 
 #include <graphviz/cdt.h>
 #include <graphviz/gvc.h>
@@ -36,9 +37,9 @@
 #include "QGraphVizNode.h"
 #include "QGraphVizEdge.h"
 
-GVC_t *QGraphViz::m_Context = gvContext();
+GVC_t *QGraphVizScene::m_Context = gvContext();
 
-QGraphViz::QGraphViz(QString content, QObject *parent) :
+QGraphVizScene::QGraphVizScene(QString content, QObject *parent) :
     QGraphicsScene(parent),
     m_Graph(NULL),
     m_LayoutEngine("dot"),
@@ -49,33 +50,58 @@ QGraphViz::QGraphViz(QString content, QObject *parent) :
     }
 
     m_Content = content;
+
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::agmemread() starting";
+#endif
     m_Graph = agmemread(m_Content.toLocal8Bit().data());
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::agmemread() finished";
+#endif
 
     doRender();
 }
 
-QGraphViz::~QGraphViz()
+QGraphVizScene::~QGraphVizScene()
 {
     if(m_LayoutDone) {
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::gvFreeLayout() starting";
+#endif
         gvFreeLayout(m_Context, m_Graph);
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::gvFreeLayout() finished";
+#endif
         m_LayoutDone = false;
     }
 
     if(m_Graph) {
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::agclose() starting";
+#endif
         agclose(m_Graph);
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::agclose() finished";
+#endif
         m_Graph = NULL;
     }
 }
 
-void QGraphViz::doLayout()
+void QGraphVizScene::doLayout()
 {
     if(m_LayoutDone) {
         return;
     }
 
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::gvLayout() starting";
+#endif
     if(gvLayout(m_Context, m_Graph, m_LayoutEngine.toLocal8Bit().data())) {
         throw tr("Layout failed");
     }
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::gvLayout() finished";
+#endif
 
     m_Translate = QPointF(-m_Graph->u.bb.LL.x, -m_Graph->u.bb.UR.y);
     m_Scale = QPointF(1.0, -1.0);
@@ -84,22 +110,31 @@ void QGraphViz::doLayout()
 }
 
 
-void QGraphViz::doRender()
+void QGraphVizScene::doRender()
 {
     doLayout();
 
     node_t *node = agfstnode(graph());
     while(node) {
-
         if(!containsNode(node->id)) {
-            addItem(new QGraphVizNode(node, this));
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " Creating node: " << node->id;
+#endif
+            QGraphVizNode *graphVizNode = new QGraphVizNode(node, this);
+            m_Nodes.insert(node->id, graphVizNode);
+            addItem(graphVizNode);
         }
 
         Agedge_t *edge = agfstedge(graph(), node);
         while(edge) {
 
             if(!containsEdge(edge->id)) {
-                addItem(new QGraphVizEdge(edge, this));
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " Creating edge " << edge->id;
+#endif
+                QGraphVizEdge *graphVizEdge = new QGraphVizEdge(edge, this);
+                m_Edges.insert(edge->id, graphVizEdge);
+                addItem(graphVizEdge);
             }
 
             edge = agnxtedge(graph(), edge, node);
@@ -118,10 +153,16 @@ void QGraphViz::doRender()
     emit QGraphicsScene::changed(rects);
 }
 
-void QGraphViz::onChanged()
+void QGraphVizScene::onChanged()
 {
     if(m_LayoutDone) {
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::gvFreeLayout() starting";
+#endif
         gvFreeLayout(m_Context, m_Graph);
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::gvFreeLayout() finished";
+#endif
         m_LayoutDone = false;
     }
 
@@ -130,14 +171,14 @@ void QGraphViz::onChanged()
 
 /*! dot; neato; circo; fdp; osage; sfdp; twopi
  */
-QString QGraphViz::layoutEngine()
+QString QGraphVizScene::layoutEngine()
 {
     return m_LayoutEngine;
 }
 
 /*! dot; neato; circo; fdp; osage; sfdp; twopi
  */
-void QGraphViz::setLayoutEngine(QString layoutEngine)
+void QGraphVizScene::setLayoutEngine(QString layoutEngine)
 {
     if(layoutEngine == m_LayoutEngine) {
         return;
@@ -151,15 +192,21 @@ void QGraphViz::setLayoutEngine(QString layoutEngine)
 
 /*! dot; xdot; png; svg; plain; etc.
  */
-QByteArray QGraphViz::exportContent(QString renderEngine)
+QByteArray QGraphVizScene::exportContent(QString renderEngine)
 {
     doLayout();
 
     char *content;
     unsigned int length;
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::gvRenderData() starting";
+#endif
     if(gvRenderData(m_Context, m_Graph, renderEngine.toLocal8Bit().data(), &content, &length)) {
         throw tr("Failed to render.");
     }
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::gvRenderData() finished";
+#endif
 
     QByteArray renderedContent = QByteArray(content, length);
 
@@ -179,84 +226,54 @@ QByteArray QGraphViz::exportContent(QString renderEngine)
 
 
 
-QPointF QGraphViz::transformPoint(const QPointF &point)
+QPointF QGraphVizScene::transformPoint(const QPointF &point)
 {
     return transformPoint(point.x(), point.y());
 }
 
-QPointF QGraphViz::transformPoint(const pointf_s &point)
+QPointF QGraphVizScene::transformPoint(const pointf_s &point)
 {
     return transformPoint(point.x, point.y);
 }
 
-QPointF QGraphViz::transformPoint(qreal x, qreal y)
+QPointF QGraphVizScene::transformPoint(qreal x, qreal y)
 {
     return QPointF((x + m_Translate.x()) * m_Scale.x(), (y + m_Translate.y()) * m_Scale.y());
 }
 
-QList<QGraphVizNode*> QGraphViz::getNodes()
+QList<QGraphVizNode*> QGraphVizScene::getNodes()
 {
-    QList<QGraphVizNode*> nodes;
-
-    foreach(QGraphicsItem *item, items()) {
-        if(item->type() == QGraphicsItem::UserType + 1) {
-            if(QGraphVizNode *node = dynamic_cast<QGraphVizNode*>(item)) {
-                nodes.append(node);
-            }
-        }
-    }
-
-    return nodes;
+    return m_Nodes.values();
 }
 
-QGraphVizNode *QGraphViz::getNode(int GVID)
+QGraphVizNode *QGraphVizScene::getNode(int GVID)
 {
-    foreach(QGraphVizNode *node, getNodes()) {
-        if(node->getGVID() == GVID) {
-            return node;
-        }
-    }
-    return NULL;
+    return m_Nodes.value(GVID, NULL);
 }
 
-bool QGraphViz::containsNode(int GVID)
+bool QGraphVizScene::containsNode(int GVID)
 {
-    return (getNode(GVID) != NULL);
-}
-
-QList<QGraphVizEdge*> QGraphViz::getEdges()
-{
-    QList<QGraphVizEdge*> edges;
-
-    foreach(QGraphicsItem *item, items()) {
-        if(item->type() == QGraphicsItem::UserType + 2) {
-            if(QGraphVizEdge *edge = dynamic_cast<QGraphVizEdge*>(item)) {
-                edges.append(edge);
-            }
-        }
-    }
-
-    return edges;
+    return m_Nodes.contains(GVID);
 }
 
 
-QGraphVizEdge *QGraphViz::getEdge(int GVID)
+QList<QGraphVizEdge*> QGraphVizScene::getEdges()
 {
-    foreach(QGraphVizEdge *edge, getEdges()) {
-        if(edge->getGVID() == GVID) {
-            return edge;
-        }
-    }
-    return NULL;
+    return m_Edges.values();
 }
 
-bool QGraphViz::containsEdge(int GVID)
+QGraphVizEdge *QGraphVizScene::getEdge(int GVID)
 {
-    return (getEdge(GVID) != NULL);
+    return m_Edges.value(GVID, NULL);
+}
+
+bool QGraphVizScene::containsEdge(int GVID)
+{
+    return m_Edges.contains(GVID);
 }
 
 
-QHash<QString, QString> QGraphViz::getAttributes()
+QHash<QString, QString> QGraphVizScene::getAttributes()
 {
     QHash<QString,QString> attr;
     Agsym_t *nextAttr = agfstattr(m_Graph);
@@ -271,7 +288,7 @@ QHash<QString, QString> QGraphViz::getAttributes()
     return attr;
 }
 
-QHash<QString, QString> QGraphViz::getAttributes(Agnode_t *node)
+QHash<QString, QString> QGraphVizScene::getAttributes(Agnode_t *node)
 {
     QHash<QString,QString> attr;
 
@@ -301,7 +318,7 @@ QHash<QString, QString> QGraphViz::getAttributes(Agnode_t *node)
     return attr;
 }
 
-QHash<QString, QString> QGraphViz::getAttributes(Agedge_t *edge)
+QHash<QString, QString> QGraphVizScene::getAttributes(Agedge_t *edge)
 {
     QHash<QString,QString> attr;
 
@@ -334,7 +351,7 @@ QHash<QString, QString> QGraphViz::getAttributes(Agedge_t *edge)
 
 
 
-QByteArray QGraphViz::getHash()
+QByteArray QGraphVizScene::getHash()
 {
     QCryptographicHash md5(QCryptographicHash::Md5);
     md5.addData((char*)m_Graph, sizeof(Agraph_t));
@@ -359,7 +376,7 @@ QByteArray QGraphViz::getHash()
     return md5.result();
 }
 
-QByteArray QGraphViz::getHash(Agedge_t *edge)
+QByteArray QGraphVizScene::getHash(Agedge_t *edge)
 {
     QCryptographicHash md5(QCryptographicHash::Md5);
     md5.addData((char*)edge, sizeof(Agedge_t));
@@ -393,7 +410,7 @@ QByteArray QGraphViz::getHash(Agedge_t *edge)
     return md5.result();
 }
 
-QByteArray QGraphViz::getHash(Agnode_t *node)
+QByteArray QGraphVizScene::getHash(Agnode_t *node)
 {
     QCryptographicHash md5(QCryptographicHash::Md5);
     md5.addData((char*)node, sizeof(Agnode_t));
@@ -422,7 +439,7 @@ QByteArray QGraphViz::getHash(Agnode_t *node)
     return md5.result();
 }
 
-QByteArray QGraphViz::getHash(textlabel_t *label)
+QByteArray QGraphVizScene::getHash(textlabel_t *label)
 {
     QCryptographicHash md5(QCryptographicHash::Md5);
     md5.addData((char*)label, sizeof(textlabel_t));

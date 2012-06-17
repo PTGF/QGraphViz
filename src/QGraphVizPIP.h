@@ -53,8 +53,16 @@ protected:
     virtual void drawForeground(QPainter *painter, const QRectF &rect);
     virtual void drawBackground(QPainter *painter, const QRectF &rect);
 
+    virtual void mouseMoveEvent(QMouseEvent *event);
+    virtual void mousePressEvent(QMouseEvent *event);
+    virtual void mouseReleaseEvent(QMouseEvent *event);
+
 private:
+    QGraphVizView *m_GraphVizView;
     QRectF m_ViewPortRect;
+
+    bool m_MoveViewPort;
+
 };
 
 #endif // QGRAPHVIZPIP_H

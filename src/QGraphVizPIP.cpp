@@ -29,9 +29,22 @@
 #include "QGraphVizPIP.h"
 
 QGraphVizPIP::QGraphVizPIP(QGraphicsScene * scene, QGraphVizView * parent) :
-    QGraphicsView(scene, parent)
+    QGraphicsView(scene, parent),
+    m_GraphVizView(parent),
+    m_MoveViewPort(false)
 {
-    setRenderHint(QPainter::Antialiasing);
+    setCacheMode(QGraphicsView::CacheBackground);
+
+    setRenderHint(QPainter::Antialiasing, true);
+
+    setOptimizationFlag(QGraphicsView::DontSavePainterState, true);
+    setOptimizationFlag(QGraphicsView::DontAdjustForAntialiasing, true);
+
+    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+
+    setViewportUpdateMode(QGraphicsView::MinimalViewportUpdate);
+
+    setMouseTracking(true);
     setFrameStyle(Plain);
 
     updateViewPortRect();
@@ -50,13 +63,13 @@ void QGraphVizPIP::setViewPortRect(QRectF rect)
 
 void QGraphVizPIP::drawBackground(QPainter *painter, const QRectF &rect)
 {
+
     if(!rect.intersects(scene()->sceneRect())) {
         return;
     }
 
     QPen borderPen;
     borderPen.setColor(Qt::black);
-    borderPen.setWidthF(5);
     painter->setPen(borderPen);
 
     painter->drawRect(QRectF(mapToScene(0,0), mapToScene(width(),height())));
@@ -77,7 +90,6 @@ void QGraphVizPIP::drawForeground(QPainter *painter, const QRectF &rect)
 
     QPen pen;
     pen.setColor(color);
-    pen.setWidthF(1.5);
     painter->setPen(pen);
 
     QBrush brush;
@@ -124,3 +136,41 @@ void QGraphVizPIP::updateViewPortRect()
     fitInView(sceneRect().adjusted(-20,-20,20,20), Qt::KeepAspectRatio);
     resetCachedContent();
 }
+
+void QGraphVizPIP::mousePressEvent(QMouseEvent *event)
+{
+    if(event->buttons() == Qt::LeftButton || event->buttons() == Qt::MidButton) {
+        if(m_ViewPortRect.contains(mapToScene(event->pos()))) {
+            m_MoveViewPort = true;
+        }
+    }
+
+    QGraphicsView::mousePressEvent(event);
+}
+
+void QGraphVizPIP::mouseReleaseEvent(QMouseEvent *event)
+{
+    m_MoveViewPort = false;
+
+    QGraphicsView::mouseReleaseEvent(event);
+}
+
+void QGraphVizPIP::mouseMoveEvent(QMouseEvent *event)
+{
+    if(event->buttons() == Qt::NoButton) {
+        if(m_ViewPortRect.contains(mapToScene(event->pos()))) {
+            viewport()->setCursor(Qt::PointingHandCursor);
+        } else {
+            viewport()->setCursor(Qt::ArrowCursor);
+        }
+
+    } else if(event->buttons() == Qt::LeftButton || event->buttons() == Qt::MidButton) {
+        if(m_MoveViewPort) {
+            viewport()->setCursor(Qt::ClosedHandCursor);
+            m_GraphVizView->centerOn(mapToScene(event->pos()));
+        }
+    }
+
+    QGraphicsView::mouseMoveEvent(event);
+}
+
