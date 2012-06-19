@@ -20,7 +20,6 @@ QT       += core gui
 TARGET = QGraphViz
 TEMPLATE = app
 
-
 SOURCES += main.cpp\
         MainWindow.cpp \
     QGraphVizNode.cpp \
@@ -40,6 +39,6 @@ HEADERS  += MainWindow.h \
 
 FORMS    += MainWindow.ui
 
-LIBS += -L/usr/lib64 -lgraph -lcdt -lpathplan -lxdot -lgvc
+LIBS += -lgraph -lcdt -lpathplan -lxdot -lgvc
 
 #debug:DEFINES    += QGRAPHVIZSCENE_DEBUG
