@@ -31,13 +31,15 @@
 #include <QtCore>
 #include <QtGui>
 
+#include "QGraphVizLibrary.h"
+
 #define SCALE_MIN 0.01
 #define SCALE_MAX 50.0
 
 class QGraphVizPIP;
 class QGraphVizZoomWidget;
 
-class QGraphVizView : public QGraphicsView
+class QGRAPHVIZ_EXPORT QGraphVizView : public QGraphicsView
 {
     Q_OBJECT
 public:

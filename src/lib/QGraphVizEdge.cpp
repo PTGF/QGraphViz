@@ -75,7 +75,7 @@ void QGraphVizEdge::updateGeometry()
     // Pre-render the label to get the bounding box
     updateLabel();
     QPainterPath label;
-    label.addText(m_LabelPosition, m_LabelFont, m_LabelText);
+    label.addText(0, 0 , m_LabelFont, m_LabelText);
     m_BoundingRect = m_BoundingRect.united(label.boundingRect().translated(m_LabelPosition).adjusted(-5.0, -5.0, 5.0, 5.0));
 
     prepareGeometryChange();
@@ -87,7 +87,7 @@ void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 {
     Q_UNUSED(widget)
 
-    if(tail()->collapsed() || !tail()->isVisible() || !head()->isVisible()) {
+    if(!tail()->isVisible() || !head()->isVisible()) {
         return;
     }
 
@@ -99,21 +99,42 @@ void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
         m_LastHash = currHash;
     }
 
+    if(!graphicsEffect()) {
+        setGraphicsEffect(new QGraphicsOpacityEffect(scene()));
+    }
+
+    QGraphicsOpacityEffect *effect = qobject_cast<QGraphicsOpacityEffect*>(graphicsEffect());
+    if(effect) {
+        if(tail()->transparent() || tail()->collapsed()) {
+                effect->setOpacity(0.15);
+        } else {
+            effect->setOpacity(1.0);
+        }
+    }
+
+
     // Draw path
-    if(lod >= 0.075 && !m_Path.isEmpty()) {
+    if(lod >= 0.05 && !m_Path.isEmpty()) {
         painter->setPen(m_PathPen);
         painter->setBrush(m_PathBrush);
-        painter->drawPath(m_Path);
 
-        if(lod >= 0.35 && !m_PathArrow.isEmpty()) {
-            painter->drawPath(m_PathArrow);
+        if(lod >= 0.25 || m_PathSimple.isEmpty()) {
+            painter->drawPath(m_Path);
+            if(!m_PathArrow.isEmpty()) {
+                painter->drawPath(m_PathArrow);
+            }
+        } else  {
+            painter->drawPath(m_PathSimple);
+            if(lod >= 0.125 && !m_PathArrowSimple.isEmpty()) {
+                painter->drawPath(m_PathArrowSimple);
+            }
         }
     }
 
     // Draw label
     if(lod >= 0.45 && !m_LabelText.isEmpty()) {
-        painter->setFont(m_LabelFont);
         painter->setPen(m_LabelColor);
+        painter->setFont(m_LabelFont);
         painter->drawText(m_LabelPosition, m_LabelText);
     }
 }
@@ -123,7 +144,9 @@ void QGraphVizEdge::updatePath()
 {
     if(!m_GraphVizEdge->u.spl) {
         m_Path = QPainterPath();
+        m_PathSimple = QPainterPath();
         m_PathArrow = QPainterPath();
+        m_PathArrowSimple = QPainterPath();
         return;
     }
 
@@ -136,6 +159,8 @@ void QGraphVizEdge::updatePath()
 
 
     m_Path = QPainterPath();
+    m_PathSimple = QPainterPath();
+
     bezier bez = m_GraphVizEdge->u.spl->list[0];  // Only ever one spl
 
     /*! \note Hell if I know why they don't use 'sp' as the start point, (you know, 'cause they named it that)
@@ -145,33 +170,84 @@ void QGraphVizEdge::updatePath()
     QPointF startPoint = m_GraphViz->transformPoint(bez.list[0]);
     QPointF endPoint = m_GraphViz->transformPoint(bez.ep) - startPoint;
 
+    QLineF directLine(endPoint, QPointF(0,0));
+    if(qFuzzyCompare(directLine.length(), qreal(0.0))) {
+        return;
+    }
+
     QPointF point1, point2, point3;
     for(int j=1; j < bez.size; ++j) {
         point1 = m_GraphViz->transformPoint(bez.list[j]) - startPoint; ++j;
         point2 = m_GraphViz->transformPoint(bez.list[j]) - startPoint; ++j;
         point3 = m_GraphViz->transformPoint(bez.list[j]) - startPoint;
-        m_Path.cubicTo(point1, point2, point3);
+
+
+        /*! \note Beziers in Qt4 do not self-optimize based on level-of-detail.  We need to find if the bezier appears
+                  as a straight line, and draw it as such.  This speeds things up tremendously on larger graphs.  To do
+                  this, I'm projecting the point onto the line, and finding the distance from the projected poing. If
+                  all distances are below some threshold, I draw it as a straight line.  */
+
+        QVector2D v(endPoint.y(), -endPoint.x());
+        qreal d1 = qAbs(QVector2D::dotProduct(v.normalized(), QVector2D(-point1.x(), -point1.y())));
+        qreal d2 = qAbs(QVector2D::dotProduct(v.normalized(), QVector2D(-point2.x(), -point2.y())));
+        qreal d3 = qAbs(QVector2D::dotProduct(v.normalized(), QVector2D(-point3.x(), -point3.y())));
+
+        static const qreal threshold = 0.1;
+        if(d1 < threshold && d2 < threshold && d3 < threshold) {
+            m_Path.lineTo(point3);
+        } else {
+            m_Path.cubicTo(point1, point2, point3);
+        }
     }
 
     m_Path.lineTo(endPoint);
+    m_PathSimple.lineTo(endPoint);
 
 
     // Add an arrowhead
     m_PathArrow =  QPainterPath();
-    QLineF line(endPoint, point3);
-    if(!qFuzzyCompare(line.length(), qreal(0.0))) {  // Taken from Qt4 edge example
-        qreal angle = acos(line.dx() / line.length());
-        if(line.dy() >= 0) {
+    {
+        QLineF line(endPoint, point3);
+        if(qFuzzyCompare(line.length(), qreal(0.0))) {
+            line.setP2(point2);
+        }
+        if(qFuzzyCompare(line.length(), qreal(0.0))) {
+            line.setP2(point1);
+        }
+        if(qFuzzyCompare(line.length(), qreal(0.0))) {
+            line.setP2(QPointF(0,0));
+        }
+
+        if(!qFuzzyCompare(line.length(), qreal(0.0))) {
+            qreal angle = acos(line.dx() / line.length());
+            if(line.dy() >= 0) {
+                angle = TwoPi - angle;
+            }
+
+            QPointF arrowP1 = QPointF(sin(angle + ThirdPi) * ArrowSize, cos(angle + ThirdPi) * ArrowSize);
+            m_PathArrow.moveTo(endPoint);
+            m_PathArrow.lineTo(arrowP1 + endPoint);
+
+            QPointF arrowP2 = QPointF(sin(angle + Pi - ThirdPi) * ArrowSize, cos(angle + Pi - ThirdPi) * ArrowSize);
+            m_PathArrow.moveTo(endPoint);
+            m_PathArrow.lineTo(arrowP2 + endPoint);
+        }
+    }
+
+    m_PathArrowSimple = QPainterPath();
+    {
+        qreal angle = acos(directLine.dx() / directLine.length());
+        if(directLine.dy() >= 0) {
             angle = TwoPi - angle;
         }
 
         QPointF arrowP1 = QPointF(sin(angle + ThirdPi) * ArrowSize, cos(angle + ThirdPi) * ArrowSize);
-        m_PathArrow.moveTo(endPoint);
-        m_PathArrow.lineTo(arrowP1 + endPoint);
+        m_PathArrowSimple.moveTo(endPoint);
+        m_PathArrowSimple.lineTo(arrowP1 + endPoint);
 
         QPointF arrowP2 = QPointF(sin(angle + Pi - ThirdPi) * ArrowSize, cos(angle + Pi - ThirdPi) * ArrowSize);
-        m_PathArrow.moveTo(endPoint);
-        m_PathArrow.lineTo(arrowP2 + endPoint);
+        m_PathArrowSimple.moveTo(endPoint);
+        m_PathArrowSimple.lineTo(arrowP2 + endPoint);
     }
 
     prepareGeometryChange();

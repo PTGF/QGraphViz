@@ -129,7 +129,10 @@ void QGraphVizView::mouseMoveEvent(QMouseEvent *event)
     if(event->buttons() == Qt::NoButton) {
         QGraphicsItem *item = itemAt(event->pos());
         if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
-            viewport()->setCursor(Qt::PointingHandCursor);
+            QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
+            if(node && node->isVisible() && !node->transparent()) {
+                viewport()->setCursor(Qt::PointingHandCursor);
+            }
         } else {
             viewport()->setCursor(Qt::ArrowCursor);
         }
@@ -151,7 +154,7 @@ void QGraphVizView::mouseDoubleClickEvent(QMouseEvent *event)
     QGraphicsItem *item = itemAt(event->pos());
     if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
         QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
-        if(node) {
+        if(node && node->isVisible() && !node->transparent()) {
             node->toggleCollapse();
         }
     }

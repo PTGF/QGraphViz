@@ -33,10 +33,12 @@
 
 #include <graphviz/types.h>
 
+#include "QGraphVizLibrary.h"
+
 class QGraphVizNode;
 class QGraphVizEdge;
 
-class QGraphVizScene : public QGraphicsScene
+class QGRAPHVIZ_EXPORT QGraphVizScene : public QGraphicsScene
 {
     Q_OBJECT
 public:

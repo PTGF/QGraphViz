@@ -35,7 +35,8 @@ QGraphVizNode::QGraphVizNode(node_t *node, QGraphVizScene *graphViz, QGraphicsIt
     QGraphicsItem(parent),
     m_GraphVizNode(node),
     m_GraphViz(graphViz),
-    m_Collapsed(false)
+    m_Collapsed(false),
+    m_Transparent(false)
 {
     updateGeometry();
 }
@@ -62,11 +63,15 @@ bool QGraphVizNode::collapsed()
 
 void QGraphVizNode::setCollapsed(bool collapse)
 {
+    if(transparent()) {
+        return;
+    }
+
     m_Collapsed = collapse;
 
     foreach(QGraphVizEdge *edge, m_GraphViz->getEdges()) {
         if(edge->tail() == this) {
-            edge->head()->setVisible(!m_Collapsed);
+            edge->head()->setTransparent(m_Collapsed);
             edge->update();
         }
     }
@@ -80,14 +85,20 @@ void QGraphVizNode::toggleCollapse()
     setCollapsed(!collapsed());
 }
 
-void QGraphVizNode::setVisible(bool visible)
+bool QGraphVizNode::transparent()
 {
-    QGraphicsItem::setVisible(visible);
+    return m_Transparent;
+}
+
+
+void QGraphVizNode::setTransparent(bool transparent)
+{
+    m_Transparent = transparent;
 
     foreach(QGraphVizEdge *edge, m_GraphViz->getEdges()) {
         if(edge->tail() == this) {
             if(!collapsed()) {
-                edge->head()->setVisible(visible);
+                edge->head()->setTransparent(transparent);
                 edge->update(edge->boundingRect().adjusted(-5,-5,20,5));
             }
         }
@@ -139,9 +150,22 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 
     const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
 
+
+    if(!graphicsEffect()) {
+        setGraphicsEffect(new QGraphicsOpacityEffect(scene()));
+    }
+
+    QGraphicsOpacityEffect *effect = qobject_cast<QGraphicsOpacityEffect*>(graphicsEffect());
+    if(effect) {
+        if(transparent()) {
+                effect->setOpacity(0.15);
+        } else {
+            effect->setOpacity(1.0);
+        }
+    }
+
     // Paint the path
     if(lod >= 0.01 && !m_Path.isEmpty()) {
-
         if(collapsed()) {
             QPen pen = QPen(m_PathPen);
             pen.setStyle(Qt::DotLine);
@@ -156,8 +180,8 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 
     // Draw the labels
     if(lod >= 0.45 && !m_LabelText.isEmpty()) {
-        painter->setFont(m_LabelFont);
         painter->setPen(m_LabelColor);
+        painter->setFont(m_LabelFont);
         painter->drawText(m_Path.boundingRect(), m_LabelText, m_LabelOptions);
     }
 }

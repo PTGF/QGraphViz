@@ -33,10 +33,12 @@
 
 #include <graphviz/types.h>
 
+#include "QGraphVizLibrary.h"
+
 class QGraphVizLabel;
 class QGraphVizScene;
 
-class QGraphVizNode : public QGraphicsItem
+class QGRAPHVIZ_EXPORT QGraphVizNode : public QGraphicsItem
 {
 public:
     explicit QGraphVizNode(node_t *node, QGraphVizScene *graphViz, QGraphicsItem *parent = 0);
@@ -47,7 +49,9 @@ public:
     bool collapsed();
     void setCollapsed(bool collapse = true);
     void toggleCollapse();
-    void setVisible(bool visible);
+
+    void setTransparent(bool transparent);
+    bool transparent();
 
 protected:
     virtual QRectF boundingRect() const;
@@ -74,6 +78,8 @@ private:
     QFont m_LabelFont;
     QColor m_LabelColor;
     QString m_LabelText;
+
+    bool m_Transparent;
 
 };
 

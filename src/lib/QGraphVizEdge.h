@@ -33,11 +33,13 @@
 
 #include <graphviz/types.h>
 
+#include "QGraphVizLibrary.h"
+
 class QGraphVizNode;
 class QGraphVizLabel;
 class QGraphVizScene;
 
-class QGraphVizEdge : public QGraphicsItem
+class QGRAPHVIZ_EXPORT QGraphVizEdge : public QGraphicsItem
 {
 public:
     explicit QGraphVizEdge(edge_t *edge, QGraphVizScene *graphViz, QGraphicsItem *parent = 0);
@@ -68,6 +70,8 @@ private:
     QBrush m_PathBrush;
     QPainterPath m_Path;
     QPainterPath m_PathArrow;
+    QPainterPath m_PathSimple;
+    QPainterPath m_PathArrowSimple;
 
     QPointF m_LabelPosition;
     QFont m_LabelFont;

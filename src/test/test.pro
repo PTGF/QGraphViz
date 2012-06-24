@@ -15,11 +15,19 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-TEMPLATE = subdirs
+include(../QGraphViz.pri)
 
-SUBDIRS  = lib test
+TEMPLATE = app
 
-lib.subdir = lib
+TARGET = Test$${APPLICATION_TARGET}$${LIB_POSTFIX}
 
-test.subdir = test
-test.depends = lib
+win32:target.path = /
+else:target.path  = /bin
+INSTALLS         += target
+
+SOURCES +=  main.cpp \
+            MainWindow.cpp
+HEADERS  += MainWindow.h
+FORMS    += MainWindow.ui
+
+LIBS    += -L$$quote($${BUILD_PATH}/lib/$${DIR_POSTFIX}) -l$${APPLICATION_TARGET}$${LIB_POSTFIX}
