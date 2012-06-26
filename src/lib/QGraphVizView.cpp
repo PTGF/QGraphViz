@@ -109,8 +109,19 @@ void QGraphVizView::setZoom(qreal zoom)
 
 void QGraphVizView::mousePressEvent(QMouseEvent *event)
 {
-    if(event->buttons() == Qt::MidButton) {
-        m_MidPress = event->pos();
+    m_LastMousePressPosition = m_MousePressPosition = event->pos();
+
+    if(event->buttons() == Qt::LeftButton) {
+        m_MouseLeftPressed = true;
+    }
+
+    if(event->buttons() == Qt::MidButton ||
+       (event->buttons() & Qt::LeftButton && event->buttons() & Qt::RightButton) ) {
+        m_MouseMidPressed = true;
+    }
+
+    if(event->buttons() == Qt::RightButton) {
+        m_MouseRightPressed = true;
     }
 
     QGraphicsView::mousePressEvent(event);
@@ -118,6 +129,18 @@ void QGraphVizView::mousePressEvent(QMouseEvent *event)
 
 void QGraphVizView::mouseReleaseEvent(QMouseEvent *event)
 {
+
+    if(m_MouseLeftPressed) {
+        QLineF delta(m_MousePressPosition, event->pos());
+        if(delta.length() < 1.0) {
+            mouseClickEvent(event);
+        }
+    }
+
+    m_MouseLeftPressed = false;
+    m_MouseMidPressed = false;
+    m_MouseRightPressed = false;
+
     // The event::buttons() is always 0; so the mouseMoveEvent simply processes as a no button situation
     mouseMoveEvent(event);
 
@@ -137,17 +160,37 @@ void QGraphVizView::mouseMoveEvent(QMouseEvent *event)
             viewport()->setCursor(Qt::ArrowCursor);
         }
 
-    } else if(event->buttons() == Qt::MidButton) {
-        viewport()->setCursor(Qt::ClosedHandCursor);
+    } else if(event->buttons() == Qt::LeftButton || event->buttons() == Qt::MidButton) {
+        QPointF delta = m_LastMousePressPosition - event->pos();
+        if(event->modifiers() == Qt::ControlModifier) {
+            viewport()->setCursor(Qt::SizeAllCursor);
 
-        QPointF delta = m_MidPress - event->pos();
-        horizontalScrollBar()->setValue(horizontalScrollBar()->value() + delta.x());
-        verticalScrollBar()->setValue(verticalScrollBar()->value() + delta.y());
-        m_MidPress = event->pos();
+            setTransformationAnchor(QGraphicsView::AnchorViewCenter);
+            zoom(delta.y() / 120.0);
+            setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+
+        } else if(event->modifiers() == Qt::NoModifier) {
+            viewport()->setCursor(Qt::ClosedHandCursor);
+            horizontalScrollBar()->setValue(horizontalScrollBar()->value() + delta.x());
+            verticalScrollBar()->setValue(verticalScrollBar()->value() + delta.y());
+        }
+        m_LastMousePressPosition = event->pos();
     }
 
     QGraphicsView::mouseMoveEvent(event);
 }
+
+void QGraphVizView::mouseClickEvent(QMouseEvent *event)
+{
+    QGraphicsItem *item = itemAt(event->pos());
+    if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
+        QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
+        if(node && node->isVisible() && !node->transparent()) {
+            node->setSelected(true);
+        }
+    }
+}
+
 
 void QGraphVizView::mouseDoubleClickEvent(QMouseEvent *event)
 {

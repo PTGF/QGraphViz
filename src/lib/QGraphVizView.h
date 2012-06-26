@@ -66,13 +66,18 @@ protected:
     virtual void mouseMoveEvent(QMouseEvent *event);
     virtual void mousePressEvent(QMouseEvent *event);
     virtual void mouseReleaseEvent(QMouseEvent *event);
+    virtual void mouseClickEvent(QMouseEvent *event);
 
 private:
     qreal m_Scale;
     QGraphVizPIP *m_PictureInPicture;
 
     bool m_MouseLeftPressed;
-    QPoint m_MidPress;
+    bool m_MouseMidPressed;
+    bool m_MouseRightPressed;
+
+    QPoint m_MousePressPosition;
+    QPoint m_LastMousePressPosition;
 
     QGraphVizZoomWidget *m_ZoomWidget;
 };

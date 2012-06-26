@@ -39,6 +39,7 @@ QGraphVizNode::QGraphVizNode(node_t *node, QGraphVizScene *graphViz, QGraphicsIt
     m_Transparent(false)
 {
     updateGeometry();
+    setFlag(QGraphicsItem::ItemIsSelectable, true);
 }
 
 int QGraphVizNode::type() const
@@ -95,6 +96,8 @@ void QGraphVizNode::setTransparent(bool transparent)
 {
     m_Transparent = transparent;
 
+    setFlag(QGraphicsItem::ItemIsSelectable, !m_Transparent);
+
     foreach(QGraphVizEdge *edge, m_GraphViz->getEdges()) {
         if(edge->tail() == this) {
             if(!collapsed()) {
@@ -150,7 +153,6 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 
     const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
 
-
     if(!graphicsEffect()) {
         setGraphicsEffect(new QGraphicsOpacityEffect(scene()));
     }
@@ -170,11 +172,22 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
             QPen pen = QPen(m_PathPen);
             pen.setStyle(Qt::DotLine);
             painter->setPen(pen);
+
+            painter->setBrush(m_PathBrush);
+
+        } else if(isSelected()) {
+            painter->setPen(m_PathPen);
+
+            QBrush brush = QBrush(m_PathBrush);
+            brush.setColor(brush.color().lighter());
+            painter->setBrush(brush);
+
         } else {
             painter->setPen(m_PathPen);
+
+            painter->setBrush(m_PathBrush);
         }
 
-        painter->setBrush(m_PathBrush);
         painter->drawPath(m_Path);
     }
 
