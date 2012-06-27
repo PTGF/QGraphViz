@@ -41,10 +41,10 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QFile file("test/mpi_ringtopo.0001.3D.dot");
+//    QFile file("test/mpi_ringtopo.0001.3D.dot");
 //    QFile file("test/crazy.gv");
 //    QFile file("test/Trun-472procs.32228.2D.dot");
-//    QFile file("test/cam.6.3D.dot");
+    QFile file("test/cam.6.3D.dot");
 //    QFile file("test/cray_216000.dot");  // This requires pre-processing (GraphViz fails; too wide)
 
     if(!file.exists()) {

@@ -68,7 +68,9 @@ void QGraphVizView::init()
     matrix.scale(m_Scale, m_Scale);
     setMatrix(matrix);
 
-    setSceneRect(scene()->sceneRect().adjusted(-10, -10, 10, 10));
+    QRectF sceneRect = scene()->sceneRect();
+    sceneRect.adjust(-50, -50, 50, 50);
+    setSceneRect(sceneRect);
 
     m_ZoomWidget = new QGraphVizZoomWidget(this);
     m_ZoomWidget->move(2, m_PictureInPicture->rect().bottom() + 2);
@@ -109,12 +111,19 @@ void QGraphVizView::setZoom(qreal zoom)
 
 void QGraphVizView::keyPressEvent(QKeyEvent *event)
 {
-    if(event->matches(QKeySequence::ZoomIn)) {
+    if((event->matches(QKeySequence::ZoomIn)) ||
+       (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier) && event->key() == Qt::Key_Plus) ||
+       (QLocale::system().name() == "en_US" && event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_Equal)) {
         zoomIn();
         event->accept();
         return;
     } else if(event->matches(QKeySequence::ZoomOut)) {
         zoomOut();
+        event->accept();
+        return;
+    } else if((event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_0) ||
+              (event->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier) && event->key() == Qt::Key_0)) {
+        setZoom(1.0);
         event->accept();
         return;
     } else if(event->matches(QKeySequence::MoveToPreviousPage)) {
