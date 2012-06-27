@@ -168,26 +168,19 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 
     // Paint the path
     if(lod >= 0.01 && !m_Path.isEmpty()) {
+        QPen pen = QPen(m_PathPen);
+        QBrush brush = QBrush(m_PathBrush);
+
         if(collapsed()) {
-            QPen pen = QPen(m_PathPen);
             pen.setStyle(Qt::DotLine);
-            painter->setPen(pen);
-
-            painter->setBrush(m_PathBrush);
-
-        } else if(isSelected()) {
-            painter->setPen(m_PathPen);
-
-            QBrush brush = QBrush(m_PathBrush);
+        }
+        if(isSelected()) {
+            pen.setColor(Qt::red);
             brush.setColor(brush.color().lighter());
-            painter->setBrush(brush);
-
-        } else {
-            painter->setPen(m_PathPen);
-
-            painter->setBrush(m_PathBrush);
         }
 
+        painter->setPen(pen);
+        painter->setBrush(brush);
         painter->drawPath(m_Path);
     }
 
