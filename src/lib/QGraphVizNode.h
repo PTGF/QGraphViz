@@ -37,6 +37,7 @@
 
 class QGraphVizLabel;
 class QGraphVizScene;
+class QGraphVizEdge;
 
 class QGRAPHVIZ_EXPORT QGraphVizNode : public QGraphicsItem
 {
@@ -52,6 +53,9 @@ public:
 
     void setTransparent(bool transparent);
     bool transparent();
+
+    QList<QGraphVizEdge*> headEdges();
+    QList<QGraphVizEdge*> tailEdges();
 
 protected:
     virtual QRectF boundingRect() const;
@@ -80,6 +84,11 @@ private:
     QString m_LabelText;
 
     bool m_Transparent;
+
+    bool m_HeadEdgesInitialized;
+    bool m_TailEdgesInitialized;
+    QList<QGraphVizEdge*> m_HeadEdges;
+    QList<QGraphVizEdge*> m_TailEdges;
 
 };
 

@@ -37,7 +37,6 @@
 #define SCALE_MAX 50.0
 
 class QGraphVizPIP;
-class QGraphVizZoomWidget;
 class QGraphVizNode;
 
 class QGRAPHVIZ_EXPORT QGraphVizView : public QGraphicsView
@@ -45,6 +44,10 @@ class QGRAPHVIZ_EXPORT QGraphVizView : public QGraphicsView
     Q_OBJECT
 public:
     explicit QGraphVizView(QGraphicsScene * scene, QWidget * parent = 0);
+
+    enum NodeCollapse { NodeCollapse_None, NodeCollapse_OnClick, NodeCollapse_OnDoubleClick };
+    void setNodeCollapse(NodeCollapse nodeCollapse);
+    NodeCollapse nodeCollapse();
 
 signals:
     void nodeSelected(QGraphVizNode *node);
@@ -88,7 +91,7 @@ private:
     QPoint m_MousePressPosition;
     QPoint m_LastMousePressPosition;
 
-    QGraphVizZoomWidget *m_ZoomWidget;
+    NodeCollapse m_NodeCollapse;
 };
 
 #endif // QGRAPHVIZVIEW_H

@@ -36,7 +36,9 @@ QGraphVizNode::QGraphVizNode(node_t *node, QGraphVizScene *graphViz, QGraphicsIt
     m_GraphVizNode(node),
     m_GraphViz(graphViz),
     m_Collapsed(false),
-    m_Transparent(false)
+    m_Transparent(false),
+    m_HeadEdgesInitialized(false),
+    m_TailEdgesInitialized(false)
 {
     updateGeometry();
     setFlag(QGraphicsItem::ItemIsSelectable, true);
@@ -89,6 +91,34 @@ void QGraphVizNode::toggleCollapse()
 bool QGraphVizNode::transparent()
 {
     return m_Transparent;
+}
+
+
+QList<QGraphVizEdge*> QGraphVizNode::headEdges()
+{
+    if(!m_HeadEdgesInitialized) {
+        foreach(QGraphVizEdge *edge, m_GraphViz->getEdges()) {
+            if(edge->head() == this) {
+                m_HeadEdges.append(edge);
+            }
+        }
+
+        m_HeadEdgesInitialized = true;
+    }
+    return m_HeadEdges;
+}
+
+QList<QGraphVizEdge*> QGraphVizNode::tailEdges()
+{
+    if(!m_TailEdgesInitialized) {
+        foreach(QGraphVizEdge *edge, m_GraphViz->getEdges()) {
+            if(edge->tail() == this) {
+                m_TailEdges.append(edge);
+            }
+        }
+        m_TailEdgesInitialized = true;
+    }
+    return m_TailEdges;
 }
 
 

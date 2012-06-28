@@ -30,13 +30,12 @@
 #include "QGraphVizScene.h"
 #include "QGraphVizPIP.h"
 #include "QGraphVizNode.h"
-#include "QGraphVizZoomWidget.h"
 
 QGraphVizView::QGraphVizView(QGraphicsScene * scene, QWidget * parent) :
     QGraphicsView(scene, parent),
     m_Scale(1.0),
     m_PictureInPicture(NULL),
-    m_ZoomWidget(NULL)
+    m_NodeCollapse(NodeCollapse_None)
 {
     init();
 }
@@ -63,11 +62,9 @@ void QGraphVizView::init()
     sceneRect.adjust(-50, -50, 50, 50);
     setSceneRect(sceneRect);
 
-    m_ZoomWidget = new QGraphVizZoomWidget(this);
-    m_ZoomWidget->move(2, m_PictureInPicture->rect().bottom() + 2);
-
     connect(scene(), SIGNAL(selectionChanged()), this, SLOT(selectionChanged()));
 }
+
 
 void QGraphVizView::drawForeground(QPainter *painter, const QRectF &rect)
 {
@@ -76,6 +73,18 @@ void QGraphVizView::drawForeground(QPainter *painter, const QRectF &rect)
 
     //TODO: Draw zoom scroller
 }
+
+
+void QGraphVizView::setNodeCollapse(NodeCollapse nodeCollapse)
+{
+    m_NodeCollapse = nodeCollapse;
+}
+
+QGraphVizView::NodeCollapse QGraphVizView::nodeCollapse()
+{
+    return m_NodeCollapse;
+}
+
 
 void QGraphVizView::setZoom(qreal zoom)
 {
@@ -219,6 +228,11 @@ void QGraphVizView::mouseClickEvent(QMouseEvent *event)
     if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
         QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
         if(node && node->isVisible() && !node->transparent()) {
+
+            if(m_NodeCollapse == NodeCollapse_OnClick) {
+                node->setCollapsed(!node->collapsed());
+            }
+
             emit nodeClicked(node);
         }
     }
@@ -230,6 +244,11 @@ void QGraphVizView::mouseDoubleClickEvent(QMouseEvent *event)
     if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
         QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
         if(node && node->isVisible() && !node->transparent()) {
+
+            if(m_NodeCollapse == NodeCollapse_OnDoubleClick) {
+                node->setCollapsed(!node->collapsed());
+            }
+
             emit nodeDoubleClicked(node);
         }
     }
