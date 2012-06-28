@@ -32,7 +32,6 @@ HEADERS  += QGraphVizNode.h \
             QGraphVizEdge.h \
             QGraphVizView.h \
             QGraphVizPIP.h \
-            QGraphVizZoomWidget.h \
             QGraphVizScene.h \
             QGraphVizLibrary.h
 
@@ -40,7 +39,6 @@ SOURCES +=  QGraphVizNode.cpp \
             QGraphVizEdge.cpp \
             QGraphVizView.cpp \
             QGraphVizPIP.cpp \
-            QGraphVizZoomWidget.cpp \
             QGraphVizScene.cpp
 
 LIBS += -lgraph -lcdt -lpathplan -lxdot -lgvc

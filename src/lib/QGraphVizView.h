@@ -38,18 +38,18 @@
 
 class QGraphVizPIP;
 class QGraphVizZoomWidget;
+class QGraphVizNode;
 
 class QGRAPHVIZ_EXPORT QGraphVizView : public QGraphicsView
 {
     Q_OBJECT
 public:
-    explicit QGraphVizView(QWidget *parent = 0);
     explicit QGraphVizView(QGraphicsScene * scene, QWidget * parent = 0);
 
 signals:
-//    void nodeSelected(QGraphVizNode *node);
-//    void nodeClicked(QGraphVizNode *node);
-//    void nodeDoubleClicked(QGraphVizNode *node);
+    void nodeSelected(QGraphVizNode *node);
+    void nodeClicked(QGraphVizNode *node);
+    void nodeDoubleClicked(QGraphVizNode *node);
 
 public slots:
     void zoomIn();
@@ -58,10 +58,11 @@ public slots:
 protected:
     void init();
 
-    virtual void drawForeground(QPainter *painter, const QRectF &rect);
-
     void zoom(qreal delta);
     void setZoom(qreal zoom);
+
+    virtual void drawForeground(QPainter *painter, const QRectF &rect);
+
     virtual void wheelEvent(QWheelEvent *event);
 
     virtual void scrollContentsBy(int dx, int dy);
@@ -72,6 +73,9 @@ protected:
     virtual void mouseClickEvent(QMouseEvent *event);
 
     virtual void keyPressEvent(QKeyEvent *event);
+
+protected slots:
+    virtual void selectionChanged();
 
 private:
     qreal m_Scale;

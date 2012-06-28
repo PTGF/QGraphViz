@@ -32,15 +32,6 @@
 #include "QGraphVizNode.h"
 #include "QGraphVizZoomWidget.h"
 
-QGraphVizView::QGraphVizView(QWidget *parent) :
-    QGraphicsView(parent),
-    m_Scale(1.0),
-    m_PictureInPicture(NULL),
-    m_ZoomWidget(NULL)
-{
-    init();
-}
-
 QGraphVizView::QGraphVizView(QGraphicsScene * scene, QWidget * parent) :
     QGraphicsView(scene, parent),
     m_Scale(1.0),
@@ -74,6 +65,8 @@ void QGraphVizView::init()
 
     m_ZoomWidget = new QGraphVizZoomWidget(this);
     m_ZoomWidget->move(2, m_PictureInPicture->rect().bottom() + 2);
+
+    connect(scene(), SIGNAL(selectionChanged()), this, SLOT(selectionChanged()));
 }
 
 void QGraphVizView::drawForeground(QPainter *painter, const QRectF &rect)
@@ -222,15 +215,14 @@ void QGraphVizView::mouseMoveEvent(QMouseEvent *event)
 
 void QGraphVizView::mouseClickEvent(QMouseEvent *event)
 {
-//    QGraphicsItem *item = itemAt(event->pos());
-//    if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
-//        QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
-//        if(node && node->isVisible() && !node->transparent()) {
-//            node->setSelected(true);
-//        }
-//    }
+    QGraphicsItem *item = itemAt(event->pos());
+    if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
+        QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
+        if(node && node->isVisible() && !node->transparent()) {
+            emit nodeClicked(node);
+        }
+    }
 }
-
 
 void QGraphVizView::mouseDoubleClickEvent(QMouseEvent *event)
 {
@@ -238,7 +230,22 @@ void QGraphVizView::mouseDoubleClickEvent(QMouseEvent *event)
     if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
         QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
         if(node && node->isVisible() && !node->transparent()) {
-            node->toggleCollapse();
+            emit nodeDoubleClicked(node);
+        }
+    }
+
+    QGraphicsView::mouseDoubleClickEvent(event);
+}
+
+void QGraphVizView::selectionChanged()
+{
+    if(scene()->selectedItems().count() == 1) {
+        QGraphicsItem *item = scene()->selectedItems().at(0);
+        if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
+            QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
+            if(node && node->isVisible() && !node->transparent()) {
+                emit nodeSelected(node);
+            }
         }
     }
 }
