@@ -25,19 +25,20 @@
 
  */
 
-
 #include "QGraphVizScene.h"
 
 #include <graphviz/cdt.h>
 #include <graphviz/gvc.h>
 #include <graphviz/graph.h>
 
-#include <typeinfo>
-
 #include "QGraphVizNode.h"
 #include "QGraphVizEdge.h"
 
+
+
 GVC_t *QGraphVizScene::m_Context = gvContext();
+
+
 
 QGraphVizScene::QGraphVizScene(QString content, QObject *parent) :
     QGraphicsScene(parent),
@@ -87,6 +88,8 @@ QGraphVizScene::~QGraphVizScene()
     }
 }
 
+
+
 void QGraphVizScene::doLayout()
 {
     if(m_LayoutDone) {
@@ -108,7 +111,6 @@ void QGraphVizScene::doLayout()
 
     m_LayoutDone = true;
 }
-
 
 void QGraphVizScene::doRender()
 {
@@ -241,6 +243,8 @@ QPointF QGraphVizScene::transformPoint(qreal x, qreal y)
     return QPointF((x + m_Translate.x()) * m_Scale.x(), (y + m_Translate.y()) * m_Scale.y());
 }
 
+
+
 QList<QGraphVizNode*> QGraphVizScene::getNodes()
 {
     return m_Nodes.values();
@@ -257,6 +261,7 @@ bool QGraphVizScene::containsNode(int GVID)
 }
 
 
+
 QList<QGraphVizEdge*> QGraphVizScene::getEdges()
 {
     return m_Edges.values();
@@ -271,6 +276,7 @@ bool QGraphVizScene::containsEdge(int GVID)
 {
     return m_Edges.contains(GVID);
 }
+
 
 
 QHash<QString, QString> QGraphVizScene::getAttributes()
@@ -347,7 +353,6 @@ QHash<QString, QString> QGraphVizScene::getAttributes(Agedge_t *edge)
 
     return attr;
 }
-
 
 
 
@@ -445,5 +450,3 @@ QByteArray QGraphVizScene::getHash(textlabel_t *label)
     md5.addData((char*)label, sizeof(textlabel_t));
     return md5.result();
 }
-
-

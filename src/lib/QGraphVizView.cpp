@@ -31,6 +31,8 @@
 #include "QGraphVizPIP.h"
 #include "QGraphVizNode.h"
 
+
+
 QGraphVizView::QGraphVizView(QGraphicsScene * scene, QWidget * parent) :
     QGraphicsView(scene, parent),
     m_Scale(1.0),
@@ -66,6 +68,7 @@ void QGraphVizView::init()
 }
 
 
+
 void QGraphVizView::drawForeground(QPainter *painter, const QRectF &rect)
 {
     Q_UNUSED(painter)
@@ -73,6 +76,7 @@ void QGraphVizView::drawForeground(QPainter *painter, const QRectF &rect)
 
     //TODO: Draw zoom scroller
 }
+
 
 
 void QGraphVizView::setNodeCollapse(NodeCollapse nodeCollapse)
@@ -85,11 +89,7 @@ QGraphVizView::NodeCollapse QGraphVizView::nodeCollapse()
     return m_NodeCollapse;
 }
 
-void QGraphVizView::resizeEvent(QResizeEvent *event)
-{
-    m_PictureInPicture->updateViewPortRect();
-    QGraphicsView::resizeEvent(event);
-}
+
 
 void QGraphVizView::setZoom(qreal zoom)
 {
@@ -114,6 +114,30 @@ void QGraphVizView::setZoom(qreal zoom)
     QRectF viewPortRect = QRectF(mapToScene(0,0), mapToScene(viewport()->width(), viewport()->height()));
     viewPortRect.moveTo(mapToScene(viewport()->x(), viewport()->y()));
     m_PictureInPicture->setViewPortRect(viewPortRect);
+}
+
+void QGraphVizView::zoom(qreal delta)
+{
+    delta *= qLn(1.0 + (qPow(m_Scale, 2.0) / 7.5)) + SCALE_MIN;
+    setZoom(m_Scale + delta);
+}
+
+void QGraphVizView::zoomIn()
+{
+    zoom(1);
+}
+
+void QGraphVizView::zoomOut()
+{
+    zoom(-1);
+}
+
+
+
+void QGraphVizView::resizeEvent(QResizeEvent *event)
+{
+    m_PictureInPicture->updateViewPortRect();
+    QGraphicsView::resizeEvent(event);
 }
 
 void QGraphVizView::keyPressEvent(QKeyEvent *event)
@@ -261,6 +285,8 @@ void QGraphVizView::mouseDoubleClickEvent(QMouseEvent *event)
     QGraphicsView::mouseDoubleClickEvent(event);
 }
 
+
+
 void QGraphVizView::selectionChanged()
 {
     if(scene()->selectedItems().count() == 1) {
@@ -292,18 +318,3 @@ void QGraphVizView::wheelEvent(QWheelEvent *event)
     setTransformationAnchor(QGraphicsView::AnchorViewCenter);
 }
 
-void QGraphVizView::zoom(qreal delta)
-{
-    delta *= qLn(1.0 + (qPow(m_Scale, 2.0) / 7.5)) + SCALE_MIN;
-    setZoom(m_Scale + delta);
-}
-
-void QGraphVizView::zoomIn()
-{
-    zoom(1);
-}
-
-void QGraphVizView::zoomOut()
-{
-    zoom(-1);
-}

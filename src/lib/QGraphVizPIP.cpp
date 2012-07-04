@@ -157,10 +157,17 @@ void QGraphVizPIP::mouseDoubleClickEvent(QMouseEvent *event)
 
 void QGraphVizPIP::mousePressEvent(QMouseEvent *event)
 {
+    // Detect events beginning inside of the viewport rectangle, so we know when to drag it
     if(event->buttons() == Qt::LeftButton || event->buttons() == Qt::MidButton) {
         if(!m_ViewPortRect.contains(scene()->sceneRect()) && m_ViewPortRect.contains(mapToScene(event->pos()))) {
             m_StartedInViewport = true;
+            event->accept();
         }
+    }
+
+    // Don't allow automatic selection of nodes from the PIP
+    if(event->buttons() == Qt::LeftButton) {
+        return;
     }
 
     QGraphicsView::mousePressEvent(event);
