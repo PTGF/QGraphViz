@@ -49,6 +49,8 @@ public:
     void setNodeCollapse(NodeCollapse nodeCollapse);
     NodeCollapse nodeCollapse();
 
+    virtual void resizeEvent(QResizeEvent *event);
+
 signals:
     void nodeSelected(QGraphVizNode *node);
     void nodeClicked(QGraphVizNode *node);

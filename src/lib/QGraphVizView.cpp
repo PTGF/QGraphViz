@@ -50,10 +50,6 @@ void QGraphVizView::init()
 
     setTransformationAnchor(QGraphicsView::AnchorViewCenter);
 
-    m_PictureInPicture = new QGraphVizPIP(scene(), this);
-    m_PictureInPicture->setMaximumSize(width(), height()/2);
-    m_PictureInPicture->move(2, 2);
-
     QMatrix matrix;
     matrix.scale(m_Scale, m_Scale);
     setMatrix(matrix);
@@ -61,6 +57,10 @@ void QGraphVizView::init()
     QRectF sceneRect = scene()->sceneRect();
     sceneRect.adjust(-50, -50, 50, 50);
     setSceneRect(sceneRect);
+
+    m_PictureInPicture = new QGraphVizPIP(scene(), this);
+    m_PictureInPicture->move(2, 2);
+    m_PictureInPicture->updateViewPortRect();
 
     connect(scene(), SIGNAL(selectionChanged()), this, SLOT(selectionChanged()));
 }
@@ -85,6 +85,11 @@ QGraphVizView::NodeCollapse QGraphVizView::nodeCollapse()
     return m_NodeCollapse;
 }
 
+void QGraphVizView::resizeEvent(QResizeEvent *event)
+{
+    m_PictureInPicture->updateViewPortRect();
+    QGraphicsView::resizeEvent(event);
+}
 
 void QGraphVizView::setZoom(qreal zoom)
 {

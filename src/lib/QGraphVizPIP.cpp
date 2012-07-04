@@ -28,7 +28,7 @@
 #include "QGraphVizView.h"
 #include "QGraphVizPIP.h"
 
-QGraphVizPIP::QGraphVizPIP(QGraphicsScene * scene, QGraphVizView * parent) :
+QGraphVizPIP::QGraphVizPIP(QGraphicsScene *scene, QGraphVizView *parent) :
     QGraphicsView(scene, parent),
     m_GraphVizView(parent),
     m_StartedInViewport(false)
@@ -114,11 +114,17 @@ void QGraphVizPIP::drawForeground(QPainter *painter, const QRectF &rect)
 
 void QGraphVizPIP::updateViewPortRect()
 {
-    const int maxWidth = qMax(maximumWidth(), 100);
-    const int maxHeight = qMax(maximumHeight(), 100);
+    qreal aspectRatio = sceneRect().width() / sceneRect().height();
+
+    int maxWidth = parentWidget()->width() / 2;
+    int maxHeight = parentWidget()->height() / 2;
+
+    if(aspectRatio < 2.0 && aspectRatio > -2.0) {
+        maxWidth = parentWidget()->width() / 4;
+        maxHeight = parentWidget()->height() / 4;
+    }
 
     QSize size;
-    qreal aspectRatio = sceneRect().width() / sceneRect().height();
     if(aspectRatio > 1.0) {
         size.setWidth(maxWidth);
         size.setHeight(maxWidth / aspectRatio);
@@ -134,6 +140,7 @@ void QGraphVizPIP::updateViewPortRect()
             size.setHeight(maxWidth / aspectRatio);
         }
     }
+
     if(this->size() != size) {
         resize(size);
     }

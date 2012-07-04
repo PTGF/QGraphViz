@@ -36,7 +36,7 @@ class QGraphVizPIP : public QGraphicsView
 {
     Q_OBJECT
 public:
-    explicit QGraphVizPIP(QGraphicsScene * scene = 0, QGraphVizView * parent = 0);
+    explicit QGraphVizPIP(QGraphicsScene *scene = 0, QGraphVizView *parent = 0);
 
     void setViewPortRect(QRectF rect);
     void setViewPortRect(qreal x, qreal y, qreal width, qreal height);
