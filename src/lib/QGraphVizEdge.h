@@ -36,7 +36,6 @@
 #include "QGraphVizLibrary.h"
 
 class QGraphVizNode;
-class QGraphVizLabel;
 class QGraphVizScene;
 
 class QGRAPHVIZ_EXPORT QGraphVizEdge : public QGraphicsItem

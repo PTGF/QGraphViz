@@ -106,7 +106,6 @@ private:
 
     friend class QGraphVizNode;
     friend class QGraphVizEdge;
-    friend class QGraphVizLabel;
 };
 
 #endif // QGRAPHVIZ_H

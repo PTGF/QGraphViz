@@ -35,7 +35,6 @@
 
 #include "QGraphVizLibrary.h"
 
-class QGraphVizLabel;
 class QGraphVizScene;
 class QGraphVizEdge;
 
