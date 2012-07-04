@@ -44,15 +44,21 @@ QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphVizScene *graphViz, QGraphicsIt
     updateGeometry();
 }
 
+
+
 int QGraphVizEdge::type() const
 {
     return UserType + 2;
 }
 
+
+
 int QGraphVizEdge::getGVID()
 {
     return m_GraphVizEdge->id;
 }
+
+
 
 QRectF QGraphVizEdge::boundingRect() const
 {
@@ -75,12 +81,13 @@ void QGraphVizEdge::updateGeometry()
     // Pre-render the label to get the bounding box
     updateLabel();
     QPainterPath label;
-    label.addText(0, 0 , m_LabelFont, m_LabelText);
-    m_BoundingRect = m_BoundingRect.united(label.boundingRect().translated(m_LabelPosition).adjusted(-5.0, -5.0, 5.0, 5.0));
+    label.addText(0, 0 , labelFont(), labelText());
+    m_BoundingRect = m_BoundingRect.united(label.boundingRect().translated(labelPosition()).adjusted(-5.0, -5.0, 5.0, 5.0));
 
     prepareGeometryChange();
     update();
 }
+
 
 
 void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -112,6 +119,7 @@ void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
         }
     }
 
+    drawBackground(painter, option);
 
     // Draw path
     if(lod >= 0.05 && !m_Path.isEmpty()) {
@@ -132,12 +140,27 @@ void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     }
 
     // Draw label
-    if(lod >= 0.45 && !m_LabelText.isEmpty()) {
-        painter->setPen(m_LabelColor);
-        painter->setFont(m_LabelFont);
-        painter->drawText(m_LabelPosition, m_LabelText);
+    if(lod >= 0.45 && !labelText().isEmpty()) {
+        painter->setPen(labelColor());
+        painter->setFont(labelFont());
+        painter->drawText(labelPosition(), labelText());
     }
+
+    drawForeground(painter, option);
 }
+
+void QGraphVizEdge::drawBackground(QPainter *painter, const QStyleOptionGraphicsItem *option)
+{
+    Q_UNUSED(painter)
+    Q_UNUSED(option)
+}
+
+void QGraphVizEdge::drawForeground(QPainter *painter, const QStyleOptionGraphicsItem *option)
+{
+    Q_UNUSED(painter)
+    Q_UNUSED(option)
+}
+
 
 
 void QGraphVizEdge::updatePath()
@@ -257,10 +280,12 @@ void QGraphVizEdge::updatePath()
 void QGraphVizEdge::updateLabel()
 {
     textlabel_t *label = m_GraphVizEdge->u.label;
-    if(!label) {
+    if(!label || QString(label->text).isEmpty()) {
         m_LabelText = QString();
         return;
     }
+
+    m_LabelText = label->text;
 
     m_LabelPosition = m_GraphViz->transformPoint(label->pos) - pos();
 
@@ -272,20 +297,41 @@ void QGraphVizEdge::updateLabel()
     //! \note This was set manually in the STAT GUI, so I'm doing the same here
     m_LabelFont.setFamily("sans-serif");
 #endif
-    m_LabelFont.setPointSizeF(label->fontsize * .75);
-
-    //HACK: Prerender to get bounding box for centering on position
-    QPainterPath path;
-    path.addText(0, 0, m_LabelFont, label->text);
-    m_LabelPosition -= path.boundingRect().bottomRight() / 2;
+    m_LabelFont.setPointSizeF(label->fontsize * .6);
 
     m_LabelColor = QColor(label->fontcolor);
 
-    m_LabelText = label->text;
+    //HACK: Prerender to get bounding box for centering on position
+    QPainterPath path;
+    path.addText(0, 0, m_LabelFont, labelText());
+    m_LabelPosition -= path.boundingRect().bottomRight() / 2;
 
     prepareGeometryChange();
     update();
 }
+
+
+
+QPointF QGraphVizEdge::labelPosition()
+{
+    return m_LabelPosition;
+}
+
+QFont QGraphVizEdge::labelFont()
+{
+    return m_LabelFont;
+}
+
+QColor QGraphVizEdge::labelColor()
+{
+    return m_LabelColor;
+}
+
+QString QGraphVizEdge::labelText()
+{
+    return m_LabelText;
+}
+
 
 
 QGraphVizNode *QGraphVizEdge::head()

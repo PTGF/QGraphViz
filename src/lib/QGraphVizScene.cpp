@@ -122,7 +122,7 @@ void QGraphVizScene::doRender()
 #ifdef QGRAPHVIZSCENE_DEBUG
         qDebug() << __FILE__ << __LINE__ << " Creating node: " << node->id;
 #endif
-            QGraphVizNode *graphVizNode = new QGraphVizNode(node, this);
+            QGraphVizNode *graphVizNode = createNode(node);
             m_Nodes.insert(node->id, graphVizNode);
             addItem(graphVizNode);
         }
@@ -134,7 +134,7 @@ void QGraphVizScene::doRender()
 #ifdef QGRAPHVIZSCENE_DEBUG
         qDebug() << __FILE__ << __LINE__ << " Creating edge " << edge->id;
 #endif
-                QGraphVizEdge *graphVizEdge = new QGraphVizEdge(edge, this);
+                QGraphVizEdge *graphVizEdge = createEdge(edge);
                 m_Edges.insert(edge->id, graphVizEdge);
                 addItem(graphVizEdge);
             }
@@ -227,6 +227,10 @@ QByteArray QGraphVizScene::exportContent(QString renderEngine)
 }
 
 
+graph_t *QGraphVizScene::graph()
+{
+    return m_Graph;
+}
 
 QPointF QGraphVizScene::transformPoint(const QPointF &point)
 {
@@ -245,6 +249,11 @@ QPointF QGraphVizScene::transformPoint(qreal x, qreal y)
 
 
 
+QGraphVizNode *QGraphVizScene::createNode(node_t *node)
+{
+    return new QGraphVizNode(node, this);
+}
+
 QList<QGraphVizNode*> QGraphVizScene::getNodes()
 {
     return m_Nodes.values();
@@ -261,6 +270,11 @@ bool QGraphVizScene::containsNode(int GVID)
 }
 
 
+
+QGraphVizEdge *QGraphVizScene::createEdge(edge_t *edge)
+{
+    return new QGraphVizEdge(edge, this);
+}
 
 QList<QGraphVizEdge*> QGraphVizScene::getEdges()
 {

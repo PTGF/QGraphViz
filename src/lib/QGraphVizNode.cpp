@@ -191,11 +191,13 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     QGraphicsOpacityEffect *effect = qobject_cast<QGraphicsOpacityEffect*>(graphicsEffect());
     if(effect) {
         if(transparent()) {
-                effect->setOpacity(0.15);
+            effect->setOpacity(0.15);
         } else {
             effect->setOpacity(1.0);
         }
     }
+
+    drawBackground(painter, option);
 
     // Paint the path
     if(lod >= 0.01 && !m_Path.isEmpty()) {
@@ -216,12 +218,27 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     }
 
     // Draw the labels
-    if(lod >= 0.45 && !m_LabelText.isEmpty()) {
-        painter->setPen(m_LabelColor);
-        painter->setFont(m_LabelFont);
-        painter->drawText(m_Path.boundingRect(), m_LabelText, m_LabelOptions);
+    if(lod >= 0.45 && !labelText().isEmpty()) {
+        painter->setPen(labelColor());
+        painter->setFont(labelFont());
+        painter->drawText(m_Path.boundingRect(), labelText(), labelOptions());
     }
+
+    drawForeground(painter, option);
 }
+
+void QGraphVizNode::drawBackground(QPainter *painter, const QStyleOptionGraphicsItem *option)
+{
+    Q_UNUSED(painter)
+    Q_UNUSED(option)
+}
+
+void QGraphVizNode::drawForeground(QPainter *painter, const QStyleOptionGraphicsItem *option)
+{
+    Q_UNUSED(painter)
+    Q_UNUSED(option)
+}
+
 
 void QGraphVizNode::updatePath()
 {
@@ -294,6 +311,8 @@ void QGraphVizNode::updateLabel()
         return;
     }
 
+    m_LabelText = label->text;
+
     m_LabelFont.setStyleHint(QFont::Serif);
     m_LabelFont.setStyleStrategy((QFont::StyleStrategy)(QFont::PreferAntialias | QFont::PreferQuality));
 #if 0
@@ -306,7 +325,7 @@ void QGraphVizNode::updateLabel()
 
     //HACK: Pre-render to get optimal font size to fit in bounding box without overflow/wrap
     QPainterPath labelPath;
-    labelPath.addText(0, 0, m_LabelFont, label->text);
+    labelPath.addText(0, 0, m_LabelFont, labelText());
 
     QPointF size(m_GraphVizNode->u.width * 72, m_GraphVizNode->u.height * 72);
     QRectF rectDraw = QRectF(-size/2, size/2);  // Center point of overall block
@@ -344,8 +363,29 @@ void QGraphVizNode::updateLabel()
     m_LabelOptions.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
 
 
-    m_LabelText = label->text;
-
     prepareGeometryChange();
     update();
 }
+
+
+
+QTextOption QGraphVizNode::labelOptions()
+{
+    return m_LabelOptions;
+}
+
+QFont QGraphVizNode::labelFont()
+{
+    return m_LabelFont;
+}
+
+QColor QGraphVizNode::labelColor()
+{
+    return m_LabelColor;
+}
+
+QString QGraphVizNode::labelText()
+{
+    return m_LabelText;
+}
+

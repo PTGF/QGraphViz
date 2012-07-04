@@ -61,9 +61,18 @@ protected:
     virtual QRectF boundingRect() const;
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
+    virtual void drawBackground(QPainter *painter, const QStyleOptionGraphicsItem *option);
+    virtual void drawForeground(QPainter *painter, const QStyleOptionGraphicsItem *option);
+
     void updateGeometry();
     void updatePath();
     void updateLabel();
+
+    virtual QTextOption labelOptions();
+    virtual QFont labelFont();
+    virtual QColor labelColor();
+    virtual QString labelText();
+
 
 private:
     node_t *m_GraphVizNode;

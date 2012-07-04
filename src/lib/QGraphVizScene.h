@@ -56,14 +56,14 @@ signals:
     void changed();
 
 public slots:
-    void doRender();
+    virtual void doRender();
 
 protected slots:
     void onChanged();
     void doLayout();
 
 protected:
-    graph_t *graph() { return m_Graph; }
+    graph_t *graph();
     QPointF transformPoint(const pointf_s &point);
     QPointF transformPoint(const QPointF &point);
     QPointF transformPoint(qreal x, qreal y);
@@ -77,10 +77,12 @@ protected:
     QByteArray getHash(Agnode_t *node);
     QByteArray getHash(textlabel_t *label);
 
+    virtual QGraphVizNode *createNode(node_t *node);
     QList<QGraphVizNode*> getNodes();
     QGraphVizNode *getNode(int GVID);
     bool containsNode(int GVID);
 
+    virtual QGraphVizEdge *createEdge(edge_t *edge);
     QList<QGraphVizEdge*> getEdges();
     QGraphVizEdge *getEdge(int GVID);
     bool containsEdge(int GVID);

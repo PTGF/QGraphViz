@@ -54,9 +54,18 @@ protected:
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
 
+    virtual void drawBackground(QPainter *painter, const QStyleOptionGraphicsItem *option);
+    virtual void drawForeground(QPainter *painter, const QStyleOptionGraphicsItem *option);
+
     void updateGeometry();
     void updatePath();
     void updateLabel();
+
+    virtual QPointF labelPosition();
+    virtual QFont labelFont();
+    virtual QColor labelColor();
+    virtual QString labelText();
+
 
 private:
     edge_t *m_GraphVizEdge;
