@@ -29,10 +29,14 @@
 #include "QGraphVizScene.h"
 #include "QGraphVizNode.h"
 
+
+
 static const double Pi = 3.14159265358979323846264338327950288419717;
-static double TwoPi = 2.0 * Pi;
-static double ThirdPi = Pi / 3;
+static const double TwoPi = 2.0 * Pi;
+static const double ThirdPi = Pi / 3;
 static const qreal ArrowSize = 10;
+
+
 
 QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphVizScene *graphViz, QGraphicsItem * parent) :
     QGraphicsItem(parent),
@@ -44,14 +48,10 @@ QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphVizScene *graphViz, QGraphicsIt
     updateGeometry();
 }
 
-
-
 int QGraphVizEdge::type() const
 {
     return UserType + 2;
 }
-
-
 
 int QGraphVizEdge::getGVID()
 {
@@ -113,7 +113,7 @@ void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     QGraphicsOpacityEffect *effect = qobject_cast<QGraphicsOpacityEffect*>(graphicsEffect());
     if(effect) {
         if(tail()->transparent() || tail()->collapsed()) {
-                effect->setOpacity(0.15);
+            effect->setOpacity(0.15);
         } else {
             effect->setOpacity(1.0);
         }
@@ -287,7 +287,6 @@ void QGraphVizEdge::updateLabel()
 
     m_LabelText = label->text;
 
-    m_LabelPosition = m_GraphViz->transformPoint(label->pos) - pos();
 
     m_LabelFont.setStyleHint(QFont::Serif);
     m_LabelFont.setStyleStrategy((QFont::StyleStrategy)(QFont::PreferAntialias | QFont::PreferQuality));
@@ -301,9 +300,11 @@ void QGraphVizEdge::updateLabel()
 
     m_LabelColor = QColor(label->fontcolor);
 
+    m_LabelPosition = m_GraphViz->transformPoint(label->pos) - pos();
+
     //HACK: Prerender to get bounding box for centering on position
     QPainterPath path;
-    path.addText(0, 0, m_LabelFont, labelText());
+    path.addText(0, 0, labelFont(), labelText());
     m_LabelPosition -= path.boundingRect().bottomRight() / 2;
 
     prepareGeometryChange();

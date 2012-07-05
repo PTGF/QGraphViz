@@ -40,27 +40,21 @@ GVC_t *QGraphVizScene::m_Context = gvContext();
 
 
 
+QGraphVizScene::QGraphVizScene(QObject *parent) :
+    QGraphicsScene(parent),
+    m_Graph(NULL),
+    m_LayoutEngine("dot"),
+    m_LayoutDone(false)
+{
+}
+
 QGraphVizScene::QGraphVizScene(QString content, QObject *parent) :
     QGraphicsScene(parent),
     m_Graph(NULL),
     m_LayoutEngine("dot"),
     m_LayoutDone(false)
 {
-    if(content.isEmpty()) {
-        return;
-    }
-
-    m_Content = content;
-
-#ifdef QGRAPHVIZSCENE_DEBUG
-        qDebug() << __FILE__ << __LINE__ << " GraphViz::agmemread() starting";
-#endif
-    m_Graph = agmemread(m_Content.toLocal8Bit().data());
-#ifdef QGRAPHVIZSCENE_DEBUG
-        qDebug() << __FILE__ << __LINE__ << " GraphViz::agmemread() finished";
-#endif
-
-    doRender();
+    setContent(content);
 }
 
 QGraphVizScene::~QGraphVizScene()
@@ -88,6 +82,29 @@ QGraphVizScene::~QGraphVizScene()
     }
 }
 
+
+void QGraphVizScene::setContent(QString content)
+{
+    if(content.isEmpty()) {
+        return;
+    }
+
+    if(!m_Content.isEmpty()) {
+        throw tr("Content has already been set.  It can only be set once.");
+    }
+
+    m_Content = content;
+
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::agmemread() starting";
+#endif
+    m_Graph = agmemread(m_Content.toLocal8Bit().data());
+#ifdef QGRAPHVIZSCENE_DEBUG
+        qDebug() << __FILE__ << __LINE__ << " GraphViz::agmemread() finished";
+#endif
+
+    doRender();
+}
 
 
 void QGraphVizScene::doLayout()

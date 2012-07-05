@@ -42,8 +42,11 @@ class QGRAPHVIZ_EXPORT QGraphVizScene : public QGraphicsScene
 {
     Q_OBJECT
 public:
+    explicit QGraphVizScene(QObject *parent = 0);
     explicit QGraphVizScene(QString content, QObject *parent = 0);
     ~QGraphVizScene();
+
+    void setContent(QString content);
 
     QMap<QString, QString> arguments();
 

@@ -59,6 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
         QGraphVizScene *gv = new QGraphVizScene(QString(data), this);
 
         QGraphVizView *view = new QGraphVizView(gv);
+//        view->setNodeCollapse(QGraphVizView::NodeCollapse_OnDoubleClick);
         ui->tabWidget->setCurrentIndex(ui->tabWidget->addTab(view, "View"));
 
 //        QByteArray content = gv->exportContent();
