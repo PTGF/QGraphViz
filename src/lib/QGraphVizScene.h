@@ -102,8 +102,6 @@ private:
     QString m_LayoutEngine;
     bool m_LayoutDone;
 
-    QGraphicsRectItem *rect;
-
     QHash<int, QGraphVizNode*> m_Nodes;
     QHash<int, QGraphVizEdge*> m_Edges;
 

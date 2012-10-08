@@ -114,7 +114,6 @@ private:
     bool m_TailEdgesInitialized;
     QList<QGraphVizEdge*> m_HeadEdges;
     QList<QGraphVizEdge*> m_TailEdges;
-
 };
 
 #endif // QGRAPHVIZNODE_H

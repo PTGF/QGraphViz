@@ -244,6 +244,7 @@ QByteArray QGraphVizScene::exportContent(QString renderEngine)
 }
 
 
+
 graph_t *QGraphVizScene::graph()
 {
     return m_Graph;
