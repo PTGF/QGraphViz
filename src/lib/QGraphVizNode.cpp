@@ -259,23 +259,27 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 
     const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
 
-    if(!graphicsEffect()) {
-        setGraphicsEffect(new QGraphicsBlurEffect(scene()));
+    // Handle bluring; trying to optimize
+    if((lod >= 0.45) && isBlurred() && !graphicsEffect()) {
+        QGraphicsBlurEffect *effect = new QGraphicsBlurEffect(scene());
+        effect->setBlurHints(QGraphicsBlurEffect::AnimationHint);
+        setGraphicsEffect(effect);
     }
 
     QGraphicsBlurEffect *effect = qobject_cast<QGraphicsBlurEffect*>(graphicsEffect());
     if(effect) {
-        if((lod >= 0.10) && isTransparent()) {
-            painter->setOpacity(0.15);
-        } else {
-            painter->setOpacity(1.0);
-        }
-
         if((lod >= 0.45) && isBlurred()) {
             effect->setBlurRadius(2.0);
         } else {
             effect->setBlurRadius(0.0);
         }
+    }
+
+    // Handle transparency
+    if((lod >= 0.10) && isTransparent()) {
+        painter->setOpacity(0.15);
+    } else {
+        painter->setOpacity(1.0);
     }
 
     drawBackground(painter, option);
