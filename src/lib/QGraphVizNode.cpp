@@ -29,6 +29,8 @@
 #include "QGraphVizScene.h"
 #include "QGraphVizEdge.h"
 
+#include "QGraphVizNodeEffect.h"
+
 #define STROKE_WIDTH 1.5
 
 QGraphVizNode::QGraphVizNode(node_t *node, QGraphVizScene *graphViz, QGraphicsItem * parent) :
@@ -37,6 +39,10 @@ QGraphVizNode::QGraphVizNode(node_t *node, QGraphVizScene *graphViz, QGraphicsIt
     m_GraphViz(graphViz),
     m_Collapsed(false),
     m_Transparent(false),
+    m_Blurred(false),
+    m_Highlighted(false),
+    m_HighlightWidth(15.0),
+    m_HighlightColor(Qt::cyan),
     m_HeadEdgesInitialized(false),
     m_TailEdgesInitialized(false)
 {
@@ -60,14 +66,14 @@ QString QGraphVizNode::getGVName()
     return m_GraphVizNode->name;
 }
 
-bool QGraphVizNode::collapsed()
+bool QGraphVizNode::isCollapsed()
 {
     return m_Collapsed;
 }
 
 void QGraphVizNode::setCollapsed(bool collapse)
 {
-    if(transparent()) {
+    if(isTransparent()) {
         return;
     }
 
@@ -86,12 +92,7 @@ void QGraphVizNode::setCollapsed(bool collapse)
 
 void QGraphVizNode::toggleCollapse()
 {
-    setCollapsed(!collapsed());
-}
-
-bool QGraphVizNode::transparent()
-{
-    return m_Transparent;
+    setCollapsed(!isCollapsed());
 }
 
 
@@ -123,15 +124,20 @@ QList<QGraphVizEdge*> QGraphVizNode::tailEdges()
 }
 
 
+bool QGraphVizNode::isTransparent()
+{
+    return m_Transparent;
+}
+
 void QGraphVizNode::setTransparent(bool transparent)
 {
     m_Transparent = transparent;
 
-    setFlag(QGraphicsItem::ItemIsSelectable, !m_Transparent);
+    setFlag(QGraphicsItem::ItemIsSelectable, !m_Blurred | !m_Transparent);
 
     foreach(QGraphVizEdge *edge, m_GraphViz->getEdges()) {
         if(edge->tail() == this) {
-            if(!collapsed()) {
+            if(!isCollapsed()) {
                 edge->head()->setTransparent(transparent);
                 edge->update(edge->boundingRect().adjusted(-5,-5,20,5));
             }
@@ -141,6 +147,62 @@ void QGraphVizNode::setTransparent(bool transparent)
     prepareGeometryChange();
     update();
 }
+
+
+
+bool QGraphVizNode::isBlurred()
+{
+    return m_Blurred;
+
+}
+
+void QGraphVizNode::setBlurred(bool blurred)
+{
+    m_Blurred = blurred;
+
+    setFlag(QGraphicsItem::ItemIsSelectable, !m_Blurred | !m_Transparent);
+    prepareGeometryChange();
+    update();
+}
+
+
+bool QGraphVizNode::isHighlighted()
+{
+    return m_Highlighted;
+}
+
+void QGraphVizNode::setHighlighted(bool highlighted)
+{
+    m_Highlighted = highlighted;
+    prepareGeometryChange();
+    update();
+}
+
+qreal QGraphVizNode::highlightWidth()
+{
+    return m_HighlightWidth;
+}
+
+void QGraphVizNode::setHighlightWidth(qreal width)
+{
+    m_HighlightWidth = width;
+    prepareGeometryChange();
+    update();
+}
+
+QColor QGraphVizNode::highlightColor()
+{
+    return m_HighlightColor;
+}
+
+void QGraphVizNode::setHighlightColor(QColor color)
+{
+    m_HighlightColor = color;
+    prepareGeometryChange();
+    update();
+}
+
+
 
 
 QRectF QGraphVizNode::boundingRect() const
@@ -160,7 +222,14 @@ void QGraphVizNode::updateGeometry()
     // Get bounding box for path
     updatePath();
     QRectF adjusted = m_Path.boundingRect().adjusted(-STROKE_WIDTH, -STROKE_WIDTH, STROKE_WIDTH, STROKE_WIDTH);
-    m_BoundingRect = m_BoundingRect.united(adjusted);
+
+    QRectF highlightAdjusted;
+    if(isHighlighted()) {
+        qreal highlightWidth = this->highlightWidth();
+        highlightAdjusted = m_Path.boundingRect().adjusted(-highlightWidth, -highlightWidth, highlightWidth, highlightWidth);
+    }
+
+    m_BoundingRect = m_BoundingRect.united(adjusted).united(highlightAdjusted);
 
     updateLabel();
 
@@ -185,15 +254,21 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
 
     if(!graphicsEffect()) {
-        setGraphicsEffect(new QGraphicsOpacityEffect(scene()));
+        setGraphicsEffect(new QGraphVizNodeEffect(scene()));
     }
 
-    QGraphicsOpacityEffect *effect = qobject_cast<QGraphicsOpacityEffect*>(graphicsEffect());
+    QGraphVizNodeEffect *effect = qobject_cast<QGraphVizNodeEffect*>(graphicsEffect());
     if(effect) {
-        if(transparent()) {
+        if((lod >= 0.10) && isTransparent()) {
             effect->setOpacity(0.15);
         } else {
             effect->setOpacity(1.0);
+        }
+
+        if((lod >= 0.45) && isBlurred()) {
+            effect->setBlurRadius(2.0);
+        } else {
+            effect->setBlurRadius(0.0);
         }
     }
 
@@ -204,9 +279,19 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
         QPen pen = QPen(m_PathPen);
         QBrush brush = QBrush(m_PathBrush);
 
-        if(collapsed()) {
+        if(isHighlighted()) {
+            QPen highlightPen(highlightColor());
+            highlightPen.setWidthF(highlightWidth());
+
+            painter->setPen(highlightPen);
+            painter->setBrush(Qt::transparent);
+            painter->drawPath(m_Path);
+        }
+
+        if(isCollapsed()) {
             pen.setStyle(Qt::DotLine);
         }
+
         if(isSelected()) {
             pen.setColor(Qt::red);
             brush.setColor(brush.color().lighter());
@@ -215,7 +300,7 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
         painter->setPen(pen);
         painter->setBrush(brush);
         painter->drawPath(m_Path);
-    }
+   }
 
     // Draw the labels
     if(lod >= 0.45 && !labelText().isEmpty()) {

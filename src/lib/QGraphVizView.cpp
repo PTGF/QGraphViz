@@ -226,7 +226,7 @@ void QGraphVizView::mouseMoveEvent(QMouseEvent *event)
         QGraphicsItem *item = itemAt(event->pos());
         if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
             QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
-            if(node && node->isVisible() && !node->transparent()) {
+            if(node && node->isVisible() && !node->isTransparent()) {
                 viewport()->setCursor(Qt::PointingHandCursor);
             }
         } else {
@@ -256,10 +256,10 @@ void QGraphVizView::mouseClickEvent(QMouseEvent *event)
     QGraphicsItem *item = itemAt(event->pos());
     if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
         QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
-        if(node && node->isVisible() && !node->transparent()) {
+        if(node && node->isVisible() && !node->isTransparent()) {
 
             if(m_NodeCollapse == NodeCollapse_OnClick) {
-                node->setCollapsed(!node->collapsed());
+                node->setCollapsed(!node->isCollapsed());
             }
 
             emit nodeClicked(node);
@@ -272,10 +272,10 @@ void QGraphVizView::mouseDoubleClickEvent(QMouseEvent *event)
     QGraphicsItem *item = itemAt(event->pos());
     if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
         QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
-        if(node && node->isVisible() && !node->transparent()) {
+        if(node && node->isVisible() && !node->isTransparent()) {
 
             if(m_NodeCollapse == NodeCollapse_OnDoubleClick) {
-                node->setCollapsed(!node->collapsed());
+                node->setCollapsed(!node->isCollapsed());
             }
 
             emit nodeDoubleClicked(node);
@@ -293,7 +293,7 @@ void QGraphVizView::selectionChanged()
         QGraphicsItem *item = scene()->selectedItems().at(0);
         if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
             QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
-            if(node && node->isVisible() && !node->transparent()) {
+            if(node && node->isVisible() && !node->isTransparent()) {
                 emit nodeSelected(node);
             }
         }

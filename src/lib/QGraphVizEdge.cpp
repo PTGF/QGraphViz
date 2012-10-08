@@ -112,7 +112,7 @@ void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 
     QGraphicsOpacityEffect *effect = qobject_cast<QGraphicsOpacityEffect*>(graphicsEffect());
     if(effect) {
-        if(tail()->transparent() || tail()->collapsed()) {
+        if(tail()->isTransparent() || tail()->isCollapsed()) {
             effect->setOpacity(0.15);
         } else {
             effect->setOpacity(1.0);

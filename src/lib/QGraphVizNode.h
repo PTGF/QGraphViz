@@ -46,12 +46,22 @@ public:
     QString getGVName();
     int type() const;
 
-    bool collapsed();
+    bool isCollapsed();
     void setCollapsed(bool collapse = true);
     void toggleCollapse();
 
+    bool isTransparent();
     void setTransparent(bool transparent);
-    bool transparent();
+
+    bool isBlurred();
+    void setBlurred(bool blurred);
+
+    bool isHighlighted();
+    void setHighlighted(bool highlighted);
+    qreal highlightWidth();
+    void setHighlightWidth(qreal width);
+    QColor highlightColor();
+    void setHighlightColor(QColor color);
 
     QList<QGraphVizEdge*> headEdges();
     QList<QGraphVizEdge*> tailEdges();
@@ -92,6 +102,11 @@ private:
     QString m_LabelText;
 
     bool m_Transparent;
+    bool m_Blurred;
+
+    bool m_Highlighted;
+    qreal m_HighlightWidth;
+    QColor m_HighlightColor;
 
     bool m_HeadEdgesInitialized;
     bool m_TailEdgesInitialized;

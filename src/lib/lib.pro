@@ -33,13 +33,16 @@ HEADERS  += QGraphVizNode.h \
             QGraphVizView.h \
             QGraphVizPIP.h \
             QGraphVizScene.h \
-            QGraphVizLibrary.h
+            QGraphVizLibrary.h \
+    QGraphVizNodeEffect.h \
+    QPixmapFilter.h
 
 SOURCES +=  QGraphVizNode.cpp \
             QGraphVizEdge.cpp \
             QGraphVizView.cpp \
             QGraphVizPIP.cpp \
-            QGraphVizScene.cpp
+            QGraphVizScene.cpp \
+    QGraphVizNodeEffect.cpp
 
 LIBS += -lgraph -lcdt -lpathplan -lxdot -lgvc
 
