@@ -51,6 +51,9 @@ public:
 
     virtual void resizeEvent(QResizeEvent *event);
 
+    bool handlesKeyboardEvents();
+    void setHandlesKeyboardEvents(bool handlesKeyboardEvents = true);
+
 signals:
     void nodeSelected(QGraphVizNode *node);
     void nodeClicked(QGraphVizNode *node);
@@ -59,6 +62,7 @@ signals:
 public slots:
     void zoomIn();
     void zoomOut();
+    void zoomFit();
 
 protected:
     void init();
@@ -79,6 +83,9 @@ protected:
 
     virtual void keyPressEvent(QKeyEvent *event);
 
+    virtual bool event(QEvent *event);
+    virtual bool helpEvent(QHelpEvent *event);
+
 protected slots:
     virtual void selectionChanged();
 
@@ -94,6 +101,9 @@ private:
     QPoint m_LastMousePressPosition;
 
     NodeCollapse m_NodeCollapse;
+
+    bool m_HandleKeyboardEvents;
+
 };
 
 #endif // QGRAPHVIZVIEW_H

@@ -36,6 +36,7 @@
 #include "QGraphVizLibrary.h"
 
 class QGraphVizScene;
+class QGraphVizView;
 class QGraphVizEdge;
 
 class QGRAPHVIZ_EXPORT QGraphVizNode : public QGraphicsItem
@@ -66,6 +67,8 @@ public:
     QList<QGraphVizEdge*> headEdges();
     QList<QGraphVizEdge*> tailEdges();
 
+    virtual void showToolTip(const QPoint &pos, QWidget *parent = 0, const QRect &rect = QRect());
+
 protected:
     virtual QRectF boundingRect() const;
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
@@ -81,7 +84,6 @@ protected:
     virtual QFont labelFont();
     virtual QColor labelColor();
     virtual QString labelText();
-
 
 private:
     node_t *m_GraphVizNode;

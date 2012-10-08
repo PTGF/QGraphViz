@@ -37,7 +37,8 @@ QGraphVizView::QGraphVizView(QGraphicsScene * scene, QWidget * parent) :
     QGraphicsView(scene, parent),
     m_Scale(1.0),
     m_PictureInPicture(NULL),
-    m_NodeCollapse(NodeCollapse_None)
+    m_NodeCollapse(NodeCollapse_None),
+    m_HandleKeyboardEvents(true)
 {
     init();
 }
@@ -132,6 +133,10 @@ void QGraphVizView::zoomOut()
     zoom(-1);
 }
 
+void QGraphVizView::zoomFit()
+{
+    setZoom(1.0);
+}
 
 
 void QGraphVizView::resizeEvent(QResizeEvent *event)
@@ -140,21 +145,35 @@ void QGraphVizView::resizeEvent(QResizeEvent *event)
     QGraphicsView::resizeEvent(event);
 }
 
+
+
+bool QGraphVizView::handlesKeyboardEvents()
+{
+    return m_HandleKeyboardEvents;
+}
+
+void QGraphVizView::setHandlesKeyboardEvents(bool handlesKeyboardEvents)
+{
+    m_HandleKeyboardEvents = handlesKeyboardEvents;
+}
+
 void QGraphVizView::keyPressEvent(QKeyEvent *event)
 {
-    if((event->matches(QKeySequence::ZoomIn)) ||
-       (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier) && event->key() == Qt::Key_Plus) ||
-       (QLocale::system().name() == "en_US" && event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_Equal)) {
+    if(m_HandleKeyboardEvents &&
+       ( (event->matches(QKeySequence::ZoomIn)) ||
+         (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier) && event->key() == Qt::Key_Plus) ||
+         (QLocale::system().name() == "en_US" && event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_Equal) ) ) {
         zoomIn();
         event->accept();
         return;
-    } else if(event->matches(QKeySequence::ZoomOut)) {
+    } else if(m_HandleKeyboardEvents && event->matches(QKeySequence::ZoomOut)) {
         zoomOut();
         event->accept();
         return;
-    } else if((event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_0) ||
-              (event->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier) && event->key() == Qt::Key_0)) {
-        setZoom(1.0);
+    } else if(m_HandleKeyboardEvents &&
+              ( (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key_0) ||
+               (event->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier) && event->key() == Qt::Key_0) ) ) {
+        zoomFit();
         event->accept();
         return;
     } else if(event->matches(QKeySequence::MoveToPreviousPage)) {
@@ -179,6 +198,8 @@ void QGraphVizView::keyPressEvent(QKeyEvent *event)
 
     QGraphicsView::keyPressEvent(event);
 }
+
+
 
 void QGraphVizView::mousePressEvent(QMouseEvent *event)
 {
@@ -285,6 +306,36 @@ void QGraphVizView::mouseDoubleClickEvent(QMouseEvent *event)
     QGraphicsView::mouseDoubleClickEvent(event);
 }
 
+
+bool QGraphVizView::event(QEvent *event)
+{
+    if(event->type() == QEvent::ToolTip) {
+        if(QHelpEvent *helpEvent = dynamic_cast<QHelpEvent*>(event)) {
+            if(bool ret = this->helpEvent(helpEvent)) {
+                event->accept();
+                return ret;
+            }
+        }
+    }
+
+    return QGraphicsView::event(event);
+}
+
+bool QGraphVizView::helpEvent(QHelpEvent *event)
+{
+    QGraphicsItem *item = itemAt(event->pos());
+    if(item && (item->type() == (QGraphicsItem::UserType + 1))) {
+        QGraphVizNode *node = dynamic_cast<QGraphVizNode *>(item);
+        if(node && node->isVisible()) {
+            node->showToolTip(event->globalPos(), this);
+            event->accept();
+            return true;
+        }
+    }
+
+    QToolTip::hideText();
+    return false;
+}
 
 
 void QGraphVizView::selectionChanged()

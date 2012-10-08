@@ -124,6 +124,12 @@ QList<QGraphVizEdge*> QGraphVizNode::tailEdges()
 }
 
 
+void QGraphVizNode::showToolTip(const QPoint &pos, QWidget *parent, const QRect &rect)
+{
+    QToolTip::showText(pos, this->labelText(), parent, rect);
+}
+
+
 bool QGraphVizNode::isTransparent()
 {
     return m_Transparent;
@@ -254,15 +260,15 @@ void QGraphVizNode::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
 
     if(!graphicsEffect()) {
-        setGraphicsEffect(new QGraphVizNodeEffect(scene()));
+        setGraphicsEffect(new QGraphicsBlurEffect(scene()));
     }
 
-    QGraphVizNodeEffect *effect = qobject_cast<QGraphVizNodeEffect*>(graphicsEffect());
+    QGraphicsBlurEffect *effect = qobject_cast<QGraphicsBlurEffect*>(graphicsEffect());
     if(effect) {
         if((lod >= 0.10) && isTransparent()) {
-            effect->setOpacity(0.15);
+            painter->setOpacity(0.15);
         } else {
-            effect->setOpacity(1.0);
+            painter->setOpacity(1.0);
         }
 
         if((lod >= 0.45) && isBlurred()) {
