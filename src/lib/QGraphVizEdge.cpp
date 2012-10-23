@@ -42,6 +42,9 @@ QGraphVizEdge::QGraphVizEdge(edge_t *edge, QGraphVizScene *graphViz, QGraphicsIt
     QGraphicsItem(parent),
     m_GraphVizEdge(edge),
     m_GraphViz(graphViz),
+    m_Highlighted(false),
+    m_HighlightWidth(3.0),
+    m_HighlightColor(Qt::red),
     m_Head(NULL),
     m_Tail(NULL)
 {
@@ -57,6 +60,56 @@ int QGraphVizEdge::getGVID()
 {
     return m_GraphVizEdge->id;
 }
+
+
+
+
+bool QGraphVizEdge::isHighlighted()
+{
+    return m_Highlighted;
+}
+void QGraphVizEdge::setHighlighted(bool highlighted)
+{
+    if(tail()->isTransparent()) {
+        return;
+    }
+
+    if(m_Highlighted == highlighted) {
+        return;
+    }
+
+    m_Highlighted = highlighted;
+
+    if(tail()) {
+        foreach(QGraphVizEdge *edge, tail()->headEdges()) {
+            edge->setHighlighted(m_Highlighted);
+        }
+    }
+
+    prepareGeometryChange();
+    update();
+}
+qreal QGraphVizEdge::highlightWidth()
+{
+    return m_HighlightWidth;
+}
+void QGraphVizEdge::setHighlightWidth(qreal width)
+{
+    m_HighlightWidth = width;
+    prepareGeometryChange();
+    update();
+}
+QColor QGraphVizEdge::highlightColor()
+{
+    return m_HighlightColor;
+}
+void QGraphVizEdge::setHighlightColor(QColor color)
+{
+    m_HighlightColor = color;
+    prepareGeometryChange();
+    update();
+}
+
 
 
 
@@ -123,7 +176,16 @@ void QGraphVizEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 
     // Draw path
     if(lod >= 0.05 && !m_Path.isEmpty()) {
-        painter->setPen(m_PathPen);
+
+        if(this->isHighlighted()) {
+            QPen pen(m_PathPen);
+            pen.setColor(highlightColor());
+            pen.setWidthF(highlightWidth());
+            painter->setPen(pen);
+        } else {
+            painter->setPen(m_PathPen);
+        }
+
         painter->setBrush(m_PathBrush);
 
         if(lod >= 0.25 || m_PathSimple.isEmpty()) {

@@ -79,11 +79,9 @@ void QGraphVizNode::setCollapsed(bool collapse)
 
     m_Collapsed = collapse;
 
-    foreach(QGraphVizEdge *edge, m_GraphViz->getEdges()) {
-        if(edge->tail() == this) {
-            edge->head()->setTransparent(m_Collapsed);
-            edge->update();
-        }
+    foreach(QGraphVizEdge *edge, tailEdges()) {
+        edge->head()->setTransparent(m_Collapsed);
+        edge->update();
     }
 
     prepareGeometryChange();
@@ -141,12 +139,10 @@ void QGraphVizNode::setTransparent(bool transparent)
 
     setFlag(QGraphicsItem::ItemIsSelectable, !m_Blurred | !m_Transparent);
 
-    foreach(QGraphVizEdge *edge, m_GraphViz->getEdges()) {
-        if(edge->tail() == this) {
-            if(!isCollapsed()) {
-                edge->head()->setTransparent(transparent);
-                edge->update(edge->boundingRect().adjusted(-5,-5,20,5));
-            }
+    foreach(QGraphVizEdge *edge, tailEdges()) {
+        if(!isCollapsed()) {
+            edge->head()->setTransparent(transparent);
+            edge->update(edge->boundingRect().adjusted(-5,-5,20,5));
         }
     }
 
@@ -179,7 +175,20 @@ bool QGraphVizNode::isHighlighted()
 
 void QGraphVizNode::setHighlighted(bool highlighted)
 {
+    if(isTransparent()) {
+        return;
+    }
+
+    if(m_Highlighted == highlighted) {
+        return;
+    }
+
     m_Highlighted = highlighted;
+
+    foreach(QGraphVizEdge *edge, headEdges()) {
+        edge->setHighlighted(m_Highlighted);
+    }
+
     prepareGeometryChange();
     update();
 }

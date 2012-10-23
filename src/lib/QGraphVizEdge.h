@@ -48,6 +48,14 @@ public:
     QGraphVizNode *head();
     QGraphVizNode *tail();
 
+    bool isHighlighted();
+    void setHighlighted(bool highlighted);
+    qreal highlightWidth();
+    void setHighlightWidth(qreal width);
+    QColor highlightColor();
+    void setHighlightColor(QColor color);
+
+
 protected:
     virtual QRectF boundingRect() const;
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
@@ -84,6 +92,9 @@ private:
     QColor m_LabelColor;
     QString m_LabelText;
 
+    bool m_Highlighted;
+    qreal m_HighlightWidth;
+    QColor m_HighlightColor;
 
     QGraphVizNode *m_Head;
     QGraphVizNode *m_Tail;
